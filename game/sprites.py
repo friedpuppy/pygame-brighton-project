@@ -70,11 +70,11 @@ class Button:
         self.image.fill(self.bg)
         self.rect = self.image.get_rect()
 
-        self.rext.x = self.x
+        self.rect.x = self.x
         self.rect.y = self.y
 
         self.text = self.font.render(self.content, True, self.fg) #'True' is for antialiasing turned on
-        self.text_rect = self.text.get_rect(center=(self.wdith/2, self.height/2))
+        self.text_rect = self.text.get_rect(center=(self.width/2, self.height/2))
         self.image.blit(self.text, self.text_rect)
 
     def is_pressed(self, pos, pressed):
