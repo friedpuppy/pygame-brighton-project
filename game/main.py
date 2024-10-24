@@ -53,7 +53,27 @@ class Game:
         pass
 
     def intro_screen(self):
-        pass
+        intro = True
+
+        play_button = Button(10, 50, 100, 50, WHITE, BLACK, 'Play', 32)
+
+        while intro:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    intro = False
+                    self.running = False
+
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_pressed = pygame.mouse.get_pressed()
+
+
+
+        #imageFilename = ('splash.png')
+        #"""imageFilepath = ('D:/Documents/python/brighton/test-python/splash.png')
+        #img = pygame.image.load(imageFilepath)
+        #gameWindow.blit(img,(0,0))
+        #pygame.display.update()
+        
 
 g = Game() #converts class into object
 g.intro_screen()#creates game object and runs intro_screen method. skips for now
