@@ -8,12 +8,19 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
         self.clock = pygame.time.Clock()
-        #self.font = pygame.font.Font('Tahoma', 32)
         self.font = pygame.font.Font('monofonto rg.otf', 32)
         self.running = True
 
 
         self.intro_background = pygame.image.load('./splash.png')
+
+    def createTilemap(self):
+            for i, row in enumerate(tilemap):
+                for j, column in enumerate(row):
+                    if column == "B":
+                        Block(self, j, i)
+                    if column== "P":
+                        Player(self, j, i)
 
     def new(self):
         # new game start
@@ -24,7 +31,7 @@ class Game:
         self.enemies = pygame.sprite.LayeredUpdates()
         self.attacks = pygame.sprite.LayeredUpdates()
 
-        self.player = Player(self, 1, 2)
+        self.createTilemap()
 
     def events(self):
         # game loop events
