@@ -1,6 +1,8 @@
 # Byte-compiled / optimized / DLL files
 game/__pycache__/
 *.py[cod]
+game/__pycache__/config.cpython-312.pyc
+game/__pycache__/sprites.cpython-312.pyc
 
 # C extensions
 *.so
