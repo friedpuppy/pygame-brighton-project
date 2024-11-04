@@ -21,8 +21,9 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
 
         self.facing = 'down' #is character facing up left or down etc
 
+        image_to_load = pygame.image.load("game/img/single.png")
         self.image = pygame.Surface([self.width, self.height]) #creation of a rectangle that is 32x32 pixels, then the rectangle is set as the sprite image
-        self.image.fill(RED)
+        self.image.blit(image_to_load)#function that draws the image that is loaded onto the surface
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x #tells pygame the coordinates of our rectangle
