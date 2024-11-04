@@ -11,6 +11,8 @@ class Game:
         self.font = pygame.font.Font('monofonto rg.otf', 32)
         self.running = True
 
+        self.character_spritesheet = Spritesheet('game/img/character.png')
+        self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
 
         self.intro_background = pygame.image.load('./splash.png')
 

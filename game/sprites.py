@@ -3,6 +3,16 @@ from config import *
 import math
 import random
 
+class Spritesheet:
+    def __init__(self, file):
+        self.sheet = pygame.image.load(file).convert()
+
+    def get_sprite(self, x, y, width, height):
+            sprite = pygame.Surface([width, height])
+            sprite.blit(self.sheet, (0,0), (x, y, width, height)) #cuts out the needed sprite from the spritesheet
+            sprite.set_colorkey(BLACK) #makes the specified colour transparent
+            return sprite
+
 class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited class
     def __init__(self, game, x, y): #the game is passed in as an object
 
@@ -21,9 +31,7 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
 
         self.facing = 'down' #is character facing up left or down etc
 
-        image_to_load = pygame.image.load("game/img/single.png")
-        self.image = pygame.Surface([self.width, self.height]) #creation of a rectangle that is 32x32 pixels, then the rectangle is set as the sprite image
-        self.image.blit(image_to_load)#function that draws the image that is loaded onto the surface
+        self.image = self.game.character_spritesheet.get_sprite(3, 2, self.width, self.height) #x, y, width, height
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x #tells pygame the coordinates of our rectangle
