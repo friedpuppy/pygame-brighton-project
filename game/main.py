@@ -19,6 +19,7 @@ class Game:
     def createTilemap(self):
             for i, row in enumerate(tilemap):
                 for j, column in enumerate(row):
+                    Ground(self, j, i) #draws the grass background here
                     if column == "B":
                         Block(self, j, i)
                     if column== "P":
