@@ -41,7 +41,9 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
         self.movement()
 
         self.rect.x += self.x_change
+        self.collide_blocks('x')
         self.rect.y += self.y_change
+        self.collide_blocks('y')
 
         self.x_change = 0
         self.y_change = 0
@@ -60,6 +62,24 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
         if keys[pygame.K_s]:
             self.y_change += PLAYER_SPEED
             self.facing = 'down'
+
+    def collide_blocks(self, direction): #collision function
+        if direction == "x":
+            hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
+            if hits:
+                if self.x_change > 0:
+                    self.rect.x = hits[0].rect.left - self.rect.width
+                if self.x_change < 0:
+                    self.rect.x = hits[0].rect.right
+
+        if direction == "y":
+            hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
+            if hits:
+                if self.y_change > 0:
+                    self.rect.y = hits[0].rect.top - self.rect.height
+                if self.y_change < 0:
+                    self.rect.y = hits[0].rect.bottom
+
 
 
 class Block(pygame.sprite.Sprite):
