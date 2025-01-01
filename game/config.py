@@ -3,7 +3,8 @@ WIN_HEIGHT = 480
 TILESIZE = 32
 FPS = 60
 
-PLAYER_LAYER = 3
+PLAYER_LAYER = 4
+ROAD_LAYER = 3
 BLOCK_LAYER = 2
 GROUND_LAYER = 1
 
@@ -28,6 +29,24 @@ tilemap = [
     'B.......BB.........B',
     'B..................B',
     'B............B.....B',
+    'B..................B',
+    'BBBBBBBBBBBBBBBBBBBB',    
+]
+
+overworld = [
+    'BBBBBBBBBBBBBBBBBBBB',
+    'B..................B',
+    'B..................B',
+    'B..................B',
+    'B.......R..........B',
+    'B..................B',
+    'B....P.............B',
+    'B..................B',
+    'B..................B',
+    'B.....R............B',
+    'B.....R............B',
+    'B.....R....R.......B',
+    'B.....R............B',
     'B..................B',
     'BBBBBBBBBBBBBBBBBBBB',    
 ]

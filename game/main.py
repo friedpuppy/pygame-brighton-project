@@ -17,13 +17,15 @@ class Game:
         self.intro_background = pygame.image.load('./splash.png')
 
     def createTilemap(self):
-            for i, row in enumerate(tilemap):
+            for i, row in enumerate(overworld):
                 for j, column in enumerate(row):
                     Ground(self, j, i) #draws the grass background here
                     if column == "B":
                         Block(self, j, i)
                     if column== "P":
                         Player(self, j, i)
+                    if column== "R":
+                        Road(self, j, i)
 
     def new(self):
         # new game start
