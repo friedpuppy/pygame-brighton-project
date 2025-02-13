@@ -26,6 +26,9 @@ class Game:
                         Player(self, j, i)
                     if column== "R":
                         Road(self, j, i)
+                    if column == "N":  # 'N' represents an NPC in the overworld map
+                        NPC(self, j, i, ["Hello, traveler!", "Welcome to our town!"])
+                                           
 
     def new(self):
         # new game start
@@ -35,6 +38,8 @@ class Game:
         self.blocks = pygame.sprite.LayeredUpdates()
         self.enemies = pygame.sprite.LayeredUpdates()
         self.attacks = pygame.sprite.LayeredUpdates()
+
+        self.npcs = pygame.sprite.LayeredUpdates()  # New group for NPCs
 
         self.createTilemap()
 
@@ -53,6 +58,16 @@ class Game:
         # game loop draw
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
+
+        # Check if any NPC is talking
+        for npc in self.npcs:
+            if npc.talking:
+                pygame.draw.rect(self.screen, WHITE, (50, WIN_HEIGHT - 100, WIN_WIDTH - 100, 50))
+                text = self.font.render(npc.dialogue[npc.dialogue_index], True, BLACK)
+                self.screen.blit(text, (60, WIN_HEIGHT - 85))
+
+
+
         self.clock.tick(FPS)
         pygame.display.update() #update the screen
 

@@ -37,26 +37,6 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
         self.rect.x = self.x #tells pygame the coordinates of our rectangle
         self.rect.y = self.y
 
-class NPC(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, dialogue):
-        self.game = game
-        self._layer = PLAYER_LAYER  # NPCs are on the same layer as the player
-        self.groups = self.game.all_sprites, self.game.npcs
-        pygame.sprite.Sprite.__init__(self, self.groups)
-
-        self.x = x * TILESIZE
-        self.y = y * TILESIZE
-        self.width = TILESIZE
-        self.height = TILESIZE
-        self.dialogue = dialogue  # List of dialogue lines
-        self.dialogue_index = 0
-        self.talking = False  # Whether the NPC is currently in dialogue mode
-
-        self.image = self.game.character_spritesheet.get_sprite(32, 64, self.width, self.height)
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x
-        self.rect.y = self.y
-
     def update(self):
         self.movement()
 
@@ -64,6 +44,11 @@ class NPC(pygame.sprite.Sprite):
         self.collide_blocks('x')
         self.rect.y += self.y_change
         self.collide_blocks('y')
+
+        # Check for NPC interaction
+        hits = pygame.sprite.spritecollide(self, self.game.npcs, False)
+        if hits and pygame.key.get_pressed()[pygame.K_RETURN]:  # Press Enter to talk
+            hits[0].talk()  # Start NPC dialogue
 
         self.x_change = 0
         self.y_change = 0
@@ -100,6 +85,38 @@ class NPC(pygame.sprite.Sprite):
                 if self.y_change < 0:
                     self.rect.y = hits[0].rect.bottom
 
+class NPC(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, dialogue):
+        self.game = game
+        self._layer = PLAYER_LAYER  # NPCs are on the same layer as the player
+        self.groups = self.game.all_sprites, self.game.npcs
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE
+        self.height = TILESIZE
+        self.dialogue = dialogue  # List of dialogue lines
+        self.dialogue_index = 0
+        self.talking = False  # Whether the NPC is currently in dialogue mode
+
+        self.image = self.game.character_spritesheet.get_sprite(32, 64, self.width, self.height)
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        if self.talking:
+            return  # Disable movement when in dialogue
+
+    def talk(self):
+        if not self.talking:
+            self.talking = True
+            self.dialogue_index = 0  # Start dialogue from the beginning
+        else:
+            self.dialogue_index += 1  # Move to the next dialogue line
+            if self.dialogue_index >= len(self.dialogue):
+                self.talking = False  # End conversation
 
 
 class Block(pygame.sprite.Sprite):
