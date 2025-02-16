@@ -59,14 +59,17 @@ class Game:
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
 
-        # Check if any NPC is talking
+        # Display dialogue if an NPC is talking
+        talking_npc = None
         for npc in self.npcs:
             if npc.talking:
-                pygame.draw.rect(self.screen, WHITE, (50, WIN_HEIGHT - 100, WIN_WIDTH - 100, 50))
-                text = self.font.render(npc.dialogue[npc.dialogue_index], True, BLACK)
-                self.screen.blit(text, (60, WIN_HEIGHT - 85))
+                talking_npc = npc
+                break  # Only display one NPC dialogue at a time
 
-
+        if talking_npc:
+            pygame.draw.rect(self.screen, WHITE, (50, WIN_HEIGHT - 100, WIN_WIDTH - 100, 50))
+            text = self.font.render(talking_npc.dialogue[talking_npc.dialogue_index], True, BLACK)
+            self.screen.blit(text, (60, WIN_HEIGHT - 85))
 
         self.clock.tick(FPS)
         pygame.display.update() #update the screen

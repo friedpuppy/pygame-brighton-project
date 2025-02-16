@@ -47,7 +47,7 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
 
         # Check for NPC interaction
         hits = pygame.sprite.spritecollide(self, self.game.npcs, False)
-        if hits and pygame.key.get_pressed()[pygame.K_RETURN]:  # Press Enter to talk
+        if hits:
             hits[0].talk()  # Start NPC dialogue
 
         self.x_change = 0
@@ -98,25 +98,35 @@ class NPC(pygame.sprite.Sprite):
         self.height = TILESIZE
         self.dialogue = dialogue  # List of dialogue lines
         self.dialogue_index = 0
-        self.talking = False  # Whether the NPC is currently in dialogue mode
+        self.talking = False  
+        self.can_advance = True  # Prevent holding Enter to skip text instantly
 
         self.image = self.game.character_spritesheet.get_sprite(32, 64, self.width, self.height)
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
 
-    def update(self):
-        if self.talking:
-            return  # Disable movement when in dialogue
-
     def talk(self):
-        if not self.talking:
-            self.talking = True
-            self.dialogue_index = 0  # Start dialogue from the beginning
-        else:
-            self.dialogue_index += 1  # Move to the next dialogue line
-            if self.dialogue_index >= len(self.dialogue):
-                self.talking = False  # End conversation
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_RETURN] and self.can_advance:  
+            if not self.talking:
+                self.talking = True
+                self.dialogue_index = 0  # Start dialogue
+            else:
+                self.dialogue_index += 1  # Move to next line
+
+                if self.dialogue_index >= len(self.dialogue):
+                    self.talking = False  # End conversation
+                    self.dialogue_index = 0  # Reset dialogue for next interaction
+            
+            self.can_advance = False  # Prevent holding Enter to skip instantly
+
+        # Check when Enter is released, allowing the next press to register
+        if not keys[pygame.K_RETURN]:
+            self.can_advance = True  
+
+
 
 
 class Block(pygame.sprite.Sprite):
