@@ -27,7 +27,7 @@ class Game:
                     if column== "R":
                         Road(self, j, i)
                     if column == "N":  # 'N' represents an NPC in the overworld map
-                        NPC(self, j, i, ["Hello, traveler!", "Welcome to our town!"])
+                        NPC(self, j, i, "npc_1")  # Reference dialogue by key
                                            
 
     def new(self):

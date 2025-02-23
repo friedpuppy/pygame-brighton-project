@@ -2,6 +2,7 @@ import pygame
 from config import *
 import math
 import random
+from dialogue import dialogues
 
 class Spritesheet:
     def __init__(self, file):
@@ -96,10 +97,12 @@ class NPC(pygame.sprite.Sprite):
         self.y = y * TILESIZE
         self.width = TILESIZE
         self.height = TILESIZE
-        self.dialogue = dialogue  # List of dialogue lines
+
+        self.dialogue_key = dialogue_key
+        self.dialogue = dialogues.get(dialogue, ["I have nothing to say."])  # Default if key not found
         self.dialogue_index = 0
         self.talking = False  
-        self.can_advance = True  # Prevent holding Enter to skip text instantly
+        self.can_advance = True  
 
         self.image = self.game.character_spritesheet.get_sprite(32, 64, self.width, self.height)
         self.rect = self.image.get_rect()

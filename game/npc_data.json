@@ -1,0 +1,22 @@
+{
+    "npc_1": {
+        "name": "Old Man",
+        "x": 5,
+        "y": 8,
+        "dialogue": [
+            "Hello, traveler!",
+            "This town has a rich history."
+        ],
+        "sprite": [32, 64]
+    },
+    "npc_2": {
+        "name": "Merchant",
+        "x": 10,
+        "y": 5,
+        "dialogue": [
+            "Welcome to my shop!",
+            "Would you like to buy something?"
+        ],
+        "sprite": [96, 128]
+    }
+}
