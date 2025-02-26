@@ -23,11 +23,12 @@ class Game:
                     if column == "B":
                         Block(self, j, i)
                     if column== "P":
-                        Player(self, j, i)
+                        self.player = Player(self, j, i)
                     if column== "R":
                         Road(self, j, i)
                     if column == "N":  # 'N' represents an NPC in the overworld map
                         NPC(self, j, i, "npc_1")  # Reference dialogue by key
+            return self.player
                                            
 
     def new(self):
@@ -40,8 +41,10 @@ class Game:
         self.attacks = pygame.sprite.LayeredUpdates()
 
         self.npcs = pygame.sprite.LayeredUpdates()  # New group for NPCs
+        self.talking_npc = None
+        self.player_interacting = False
 
-        self.createTilemap()
+        self.player = self.createTilemap() # assign returned player to self.player
 
     def events(self):
         # game loop events
@@ -49,10 +52,31 @@ class Game:
             if event.type == pygame.QUIT:
                 self.playing = False
                 self.running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if self.player_interacting:
+                        if self.talking_npc:
+                            self.talking_npc.talk()
+                    else:
+                        hits = pygame.sprite.spritecollide(self.player, self.npcs, False)
+                        if hits:
+                            self.player_interacting = True
+                            self.talking_npc = hits[0]
+                            self.talking_npc.talk() #starts the conversation
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_RETURN:
+                   if self.talking_npc:
+                        if not self.talking_npc.talking:
+                             self.player_interacting = False
+                             self.talking_npc = None
                 
     def update(self):
         # game loop updates
         self.all_sprites.update()
+        if not pygame.sprite.spritecollide(self.player, self.npcs, False):
+            if not self.player_interacting:
+                self.talking_npc = None #clear dialogue if there are no hits.
+
 
     def draw(self):
         # game loop draw
@@ -60,15 +84,9 @@ class Game:
         self.all_sprites.draw(self.screen)
 
         # Display dialogue if an NPC is talking
-        talking_npc = None
-        for npc in self.npcs:
-            if npc.talking:
-                talking_npc = npc
-                break  # Only display one NPC dialogue at a time
-
-        if talking_npc:
+        if self.talking_npc: #only draw the text if there is an NPC collision
             pygame.draw.rect(self.screen, WHITE, (50, WIN_HEIGHT - 100, WIN_WIDTH - 100, 50))
-            text = self.font.render(talking_npc.dialogue[talking_npc.dialogue_index], True, BLACK)
+            text = self.font.render(self.talking_npc.dialogue[self.talking_npc.dialogue_index], True, BLACK)
             self.screen.blit(text, (60, WIN_HEIGHT - 85))
 
         self.clock.tick(FPS)
@@ -110,12 +128,6 @@ class Game:
             self.screen.blit(play_button.image, play_button.rect)
             self.clock.tick(FPS)
             pygame.display.update()
-
-        #imageFilename = ('splash.png')
-        #"""imageFilepath = ('D:/Documents/python/brighton/test-python/splash.png')
-        #img = pygame.image.load(imageFilepath)
-        #gameWindow.blit(img,(0,0))
-        #pygame.display.update()
         
 
 g = Game() #converts class into object

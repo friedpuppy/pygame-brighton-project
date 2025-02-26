@@ -45,12 +45,6 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
         self.collide_blocks('x')
         self.rect.y += self.y_change
         self.collide_blocks('y')
-
-        # Check for NPC interaction
-        hits = pygame.sprite.spritecollide(self, self.game.npcs, False)
-        if hits:
-            hits[0].talk()  # Start NPC dialogue
-
         self.x_change = 0
         self.y_change = 0
 
@@ -98,8 +92,8 @@ class NPC(pygame.sprite.Sprite):
         self.width = TILESIZE
         self.height = TILESIZE
 
-        self.dialogue_key = dialogue_key
-        self.dialogue = dialogues.get(dialogue, ["I have nothing to say."])  # Default if key not found
+        self.dialogue_key = dialogue
+        self.dialogue = dialogues.get(self.dialogue_key, ["I have nothing to say."])  # Default if key not found
         self.dialogue_index = 0
         self.talking = False  
         self.can_advance = True  
@@ -111,23 +105,21 @@ class NPC(pygame.sprite.Sprite):
 
     def talk(self):
         keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_RETURN] and self.can_advance:  
+
+        if self.can_advance:
             if not self.talking:
                 self.talking = True
-                self.dialogue_index = 0  # Start dialogue
+                self.dialogue_index = 0
             else:
-                self.dialogue_index += 1  # Move to next line
-
+                self.dialogue_index += 1
                 if self.dialogue_index >= len(self.dialogue):
-                    self.talking = False  # End conversation
-                    self.dialogue_index = 0  # Reset dialogue for next interaction
-            
-            self.can_advance = False  # Prevent holding Enter to skip instantly
+                    self.talking = False
+                    self.dialogue_index = 0
+            self.can_advance = False
 
-        # Check when Enter is released, allowing the next press to register
+
         if not keys[pygame.K_RETURN]:
-            self.can_advance = True  
+            self.can_advance = True
 
 
 
