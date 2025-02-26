@@ -81,9 +81,9 @@ class Player(pygame.sprite.Sprite): #calls the __init__ method for the inherited
                     self.rect.y = hits[0].rect.bottom
 
 class NPC(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, dialogue):
+    def __init__(self, game, x, y, dialogue_key):
         self.game = game
-        self._layer = PLAYER_LAYER  # NPCs are on the same layer as the player
+        self._layer = PLAYER_LAYER
         self.groups = self.game.all_sprites, self.game.npcs
         pygame.sprite.Sprite.__init__(self, self.groups)
 
@@ -92,11 +92,13 @@ class NPC(pygame.sprite.Sprite):
         self.width = TILESIZE
         self.height = TILESIZE
 
-        self.dialogue_key = dialogue
-        self.dialogue = dialogues.get(self.dialogue_key, ["I have nothing to say."])  # Default if key not found
+        self.dialogue_key = dialogue_key
+        self.dialogue = dialogues.get(self.dialogue_key, ["I have nothing to say."])  # Get dialogue from dialogue.py
         self.dialogue_index = 0
-        self.talking = False  
-        self.can_advance = True  
+        self.talking = False
+        self.waiting_for_confirmation = False
+        self.can_advance = True
+        self.keys = pygame.key.get_pressed()
 
         self.image = self.game.character_spritesheet.get_sprite(32, 64, self.width, self.height)
         self.rect = self.image.get_rect()
@@ -104,25 +106,31 @@ class NPC(pygame.sprite.Sprite):
         self.rect.y = self.y
 
     def talk(self):
-        keys = pygame.key.get_pressed()
-
         if self.can_advance:
             if not self.talking:
                 self.talking = True
                 self.dialogue_index = 0
-            else:
+            elif not self.waiting_for_confirmation: #if we are not waiting, we are going to advance
                 self.dialogue_index += 1
-                if self.dialogue_index >= len(self.dialogue):
-                    self.talking = False
-                    self.dialogue_index = 0
+            if self.dialogue_index == len(self.dialogue): #if the index is now equal to the length
+                    self.waiting_for_confirmation = True #set the confirmation to true
+                    self.talking = True #keep talking status true to draw dialogue
+
+            elif self.waiting_for_confirmation:
+                self.talking = False
+                self.waiting_for_confirmation = False #when return is pressed after the end of the conversation
+                self.dialogue_index = 0
+                self.game.talking_npc = None #NPC is cleared.
+
             self.can_advance = False
+        if not self.keys[pygame.K_RETURN]:
+             self.can_advance = True
 
+        self.keys = pygame.key.get_pressed()
 
-        if not keys[pygame.K_RETURN]:
-            self.can_advance = True
-
-
-
+    def reset_dialogue(self):
+        self.dialogue_index = 0
+        self.can_advance = True
 
 class Block(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
