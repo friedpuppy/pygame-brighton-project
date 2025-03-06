@@ -7,7 +7,7 @@ import pytmx
 #tmxdata = pytmx.TiledMap("game\city1.tmx")
 
 from pytmx.util_pygame import load_pygame
-tmxdata = pytmx.TiledMap('game/city1.tmx')
+tmx_data = pytmx.TiledMap('game/city1.tmx')
 
 class Game:
     def __init__(self):

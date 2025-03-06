@@ -8,10 +8,10 @@ import pytmx
 #tmxdata = pytmx.TiledMap("game\city1.tmx")
 
 from pytmx.util_pygame import load_pygame
-tmxdata = pytmx.TiledMap('game/city1.tmx')
+tmx_data = pytmx.TiledMap('game/city1.tmx')
 
 
-image = tmx_data.get_tile_image(0, 0, layer)
+image = tmx_data.get_tile_image(0, 0, 'Ground')
 screen.blit(image, position)
 
 class Spritesheet:
