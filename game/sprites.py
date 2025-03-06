@@ -4,6 +4,16 @@ import math
 import random
 from dialogue import dialogues
 
+import pytmx
+#tmxdata = pytmx.TiledMap("game\city1.tmx")
+
+from pytmx.util_pygame import load_pygame
+tmxdata = pytmx.TiledMap("game\city1.tmx")
+
+
+image = tmx_data.get_tile_image(0, 0, layer)
+screen.blit(image, position)
+
 class Spritesheet:
     def __init__(self, file):
         self.sheet = pygame.image.load(file).convert()

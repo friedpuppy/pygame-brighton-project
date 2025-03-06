@@ -3,6 +3,12 @@ from sprites import *
 from config import *
 import sys
 
+import pytmx
+#tmxdata = pytmx.TiledMap("game\city1.tmx")
+
+from pytmx.util_pygame import load_pygame
+tmxdata = pytmx.TiledMap("game\city1.tmx")
+
 class Game:
     def __init__(self):
         pygame.init()
