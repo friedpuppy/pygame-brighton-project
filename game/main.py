@@ -4,6 +4,12 @@ from config import *
 import sys
 from pytmx.util_pygame import load_pygame
 
+class Tile(pygame.sprite.Sprite):
+    def __init__(self,pos,surf,groups):
+        super().__init__(groups)
+        self.image = surf
+        self.rect = self.image.get_rect(topleft = pos)
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -13,9 +19,11 @@ class Game:
         self.running = True
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
-        # self.terrain_spritesheet = Spritesheet('game/img/terrain.png') #Removed old terrain spritesheet
+        self.terrain_spritesheet = Spritesheet('game/img/terrain.png') #Readded old terrain spritesheet
 
         self.intro_background = pygame.image.load('./splash.png')
+
+        self.player = None  # Initialize player to None
 
     def createTilemap(self):
         # Load the TMX map
@@ -24,6 +32,8 @@ class Game:
         # Create sprite groups for layers (if needed)
         self.ground_tiles = pygame.sprite.LayeredUpdates()
         self.block_tiles = pygame.sprite.LayeredUpdates()
+        
+        self.blocks = pygame.sprite.LayeredUpdates()
 
         #cycle through layers
         sprite_group = pygame.sprite.Group()
@@ -32,7 +42,11 @@ class Game:
             if hasattr(layer,'data'):
                 for x,y,surf in layer.tiles():
                     pos = (x * 32, y * 32)
-                    Tile(pos = pos, surf = surf, groups = sprite_group)
+                    tile = Tile(pos = pos, surf = surf, groups = sprite_group)
+                    if layer.name == 'Buildings':
+                        self.blocks.add(tile)
+                        
+        self.all_sprites.add(sprite_group) # add the whole group to all_sprites.
         
         # find player start position from map 
         for obj in tmx_data.objects:
@@ -51,13 +65,15 @@ class Game:
         self.playing = True
 
         self.all_sprites = pygame.sprite.LayeredUpdates()
-        self.blocks = pygame.sprite.LayeredUpdates()
+        self.npcs = pygame.sprite.LayeredUpdates()
         self.enemies = pygame.sprite.LayeredUpdates()
         self.attacks = pygame.sprite.LayeredUpdates()
-
-
+        
         self.player = self.createTilemap() # assign returned player to self.player
-        self.all_sprites.add(self.player)
+        if self.player is not None:
+            self.all_sprites.add(self.player)
+            
+        
 
     def events(self):
         # game loop events
@@ -65,18 +81,30 @@ class Game:
             if event.type == pygame.QUIT:
                 self.playing = False
                 self.running = False
+            #The following code has been removed as dialogue has been removed.
+            # if event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_RETURN:
+            #        for npc in self.npcs:
+            #           if abs(self.player.rect.centerx - npc.rect.centerx) < TILESIZE and abs(self.player.rect.centery - npc.rect.centery) < TILESIZE :
+            #             npc.talk()
 
                 
     def update(self):
         # game loop updates
         self.all_sprites.update()
-
-
+        
 
     def draw(self):
         # game loop draw
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
+        #The following code has been removed as dialogue has been removed.
+        #draw text for npcs
+        # for npc in self.npcs:
+        #     if npc.talking:
+        #         text_surface = self.font.render(npc.dialogue[npc.dialogue_index], True, BLACK)
+        #         text_rect = text_surface.get_rect(center = (WIN_WIDTH/2, WIN_HEIGHT/2))
+        #         self.screen.blit(text_surface, text_rect)
         self.clock.tick(FPS)
         pygame.display.update() #update the screen
 
