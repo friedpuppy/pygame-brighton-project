@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="7" nextobjectid="9">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="14">
  <tileset firstgid="1" name="Slates v.2 [32x32px orthogonal tileset by Ivan Voirol]" tilewidth="32" tileheight="32" tilecount="1288" columns="56">
   <image source="Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].png" width="1792" height="736"/>
   <tile id="108">
@@ -154,9 +154,6 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="6" name="Object Layer 1">
-  <object id="6" name="Rectangle" type="Shape" x="240.667" y="322.667" width="288" height="160"/>
- </objectgroup>
  <layer id="4" name="Windmill" width="30" height="20">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -229,4 +226,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="8" name="Player">
+  <object id="13" gid="1287" x="317.25" y="321.25" width="32" height="32"/>
+ </objectgroup>
 </map>
