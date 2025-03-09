@@ -1,14 +1,8 @@
 import pygame
-from sprites import *
+from sprites import *  # Import everything from sprites.py
 from config import *
 import sys
 from pytmx.util_pygame import load_pygame
-
-class Tile(pygame.sprite.Sprite):
-    def __init__(self,pos,surf,groups):
-        super().__init__(groups)
-        self.image = surf
-        self.rect = self.image.get_rect(topleft = pos)
 
 class Game:
     def __init__(self):
@@ -37,7 +31,7 @@ class Game:
             if hasattr(layer,'data'):
                 for x,y,surf in layer.tiles():
                     pos = (x * 32, y * 32)
-                    tile = Tile(pos = pos, surf = surf, groups = sprite_group)
+                    tile = Tile(pos = pos, surf = surf, groups = sprite_group) #Tile is now referenced from sprites.py
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
                     elif layer.name == 'Roof':
