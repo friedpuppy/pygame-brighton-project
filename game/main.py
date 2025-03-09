@@ -3,30 +3,12 @@ from sprites import *
 from config import *
 import sys
 from pytmx.util_pygame import load_pygame
-import time
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, pos, surf, groups, animation_frames=None):
+    def __init__(self,pos,surf,groups):
         super().__init__(groups)
-        self.animation_frames = animation_frames
-        if animation_frames:
-            self.is_animated = True
-            self.current_frame = 0
-            self.last_update = pygame.time.get_ticks()
-            self.animation_speed = animation_frames[0].duration
-            self.image = animation_frames[0].image
-        else:
-            self.is_animated = False
-            self.image = surf
-        self.rect = self.image.get_rect(topleft=pos)
-
-    def update(self):
-        if self.is_animated:
-            now = pygame.time.get_ticks()
-            if now - self.last_update > self.animation_speed:
-                self.last_update = now
-                self.current_frame = (self.current_frame + 1) % len(self.animation_frames)
-                self.image = self.animation_frames[self.current_frame].image
+        self.image = surf
+        self.rect = self.image.get_rect(topleft = pos)
 
 class Game:
     def __init__(self):
@@ -38,55 +20,48 @@ class Game:
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
+
         self.intro_background = pygame.image.load('./splash.png')
-        self.image_layers = []
 
         self.player = None
         self.roof_tiles = pygame.sprite.Group()
-        self.windmill_tiles = pygame.sprite.Group()
-        self.animated_objects = pygame.sprite.Group()
+        self.windmill_tiles = pygame.sprite.Group() #new windmill group
 
     def createTilemap(self):
         tmx_data = load_pygame('game/map/city.tmx')
         
         self.blocks = pygame.sprite.LayeredUpdates()
+
         sprite_group = pygame.sprite.Group()
         for layer in tmx_data.layers:
-            if hasattr(layer, 'data'):
-                for x, y, surf in layer.tiles():
+            if hasattr(layer,'data'):
+                for x,y,surf in layer.tiles():
                     pos = (x * 32, y * 32)
-                    tile_id = tmx_data.get_tile_gid(x, y, layer.id)
-                    animation_frames = tmx_data.get_tile_animation_frames(tile_id)
-                    if animation_frames:
-                        tile = Tile(pos=pos, surf=None, groups=sprite_group, animation_frames=animation_frames)
-                    else:
-                        tile = Tile(pos=pos, surf=surf, groups=sprite_group)
-
+                    tile = Tile(pos = pos, surf = surf, groups = sprite_group)
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
                     elif layer.name == 'Roof':
                         self.roof_tiles.add(tile)
-                    elif layer.name == 'Windmill':
-                        self.windmill_tiles.add(tile)
-            elif hasattr(layer, 'objects'):
-                 for obj in layer:
-                        if obj.name == 'Player':
-                                player_start_x = obj.x // TILESIZE
-                                player_start_y = obj.y // TILESIZE
-                                self.player = Player(self, player_start_x, player_start_y)
-                        elif layer.name == "WindmillAnimated":
-                             tile_id = obj.gid
-                             pos = (obj.x, obj.y)
-                             animation_frames = tmx_data.get_tile_animation_frames(tile_id)
-                             tile = Tile(pos = pos, surf = None, groups = self.animated_objects, animation_frames = animation_frames)
-            elif hasattr(layer, 'image'):
-                  self.image_layers.append(layer)
+                    elif layer.name == 'Windmill': #new conditional
+                        self.windmill_tiles.add(tile) #new tile group
+
         self.all_sprites.add(sprite_group)
+        
+        for obj in tmx_data.objects:
+            if obj.name == 'Player':
+                player_start_x = obj.x // TILESIZE
+                player_start_y = obj.y // TILESIZE
+                self.player = Player(self, player_start_x, player_start_y)
+                break
+
         return self.player
+                                           
 
     def new(self):
         self.playing = True
+
         self.all_sprites = pygame.sprite.LayeredUpdates()
+        
         self.player = self.createTilemap()
         if self.player is not None:
             self.all_sprites.add(self.player)
@@ -99,17 +74,13 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
-        self.windmill_tiles.update()
-        self.animated_objects.update()
+        
 
     def draw(self):
         self.screen.fill(BLACK)
-        for layer in self.image_layers:
-           self.screen.blit(layer.image, (layer.offsetx, layer.offsety))
-        self.all_sprites.draw(self.screen)
-        self.roof_tiles.draw(self.screen)
-        self.windmill_tiles.draw(self.screen)
-        self.animated_objects.draw(self.screen)
+        self.all_sprites.draw(self.screen) #draw all except the roof and windmill
+        self.roof_tiles.draw(self.screen) #draw roof
+        self.windmill_tiles.draw(self.screen) #new windmill draw
         self.clock.tick(FPS)
         pygame.display.update()
 
