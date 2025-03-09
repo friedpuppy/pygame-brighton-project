@@ -3,12 +3,30 @@ from sprites import *
 from config import *
 import sys
 from pytmx.util_pygame import load_pygame
+import time
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self,pos,surf,groups):
+    def __init__(self, pos, surf, groups, animation_frames=None):
         super().__init__(groups)
-        self.image = surf
-        self.rect = self.image.get_rect(topleft = pos)
+        self.animation_frames = animation_frames
+        if animation_frames:
+            self.is_animated = True
+            self.current_frame = 0
+            self.last_update = pygame.time.get_ticks()
+            self.animation_speed = animation_frames[0].duration
+            self.image = animation_frames[0].image
+        else:
+            self.is_animated = False
+            self.image = surf
+        self.rect = self.image.get_rect(topleft=pos)
+
+    def update(self):
+        if self.is_animated:
+            now = pygame.time.get_ticks()
+            if now - self.last_update > self.animation_speed:
+                self.last_update = now
+                self.current_frame = (self.current_frame + 1) % len(self.animation_frames)
+                self.image = self.animation_frames[self.current_frame].image
 
 class Game:
     def __init__(self):
@@ -19,101 +37,87 @@ class Game:
         self.running = True
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
-        self.terrain_spritesheet = Spritesheet('game/img/terrain.png') #Readded old terrain spritesheet
-
+        self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
         self.intro_background = pygame.image.load('./splash.png')
+        self.image_layers = []
 
-        self.player = None  # Initialize player to None
+        self.player = None
+        self.roof_tiles = pygame.sprite.Group()
+        self.windmill_tiles = pygame.sprite.Group()
+        self.animated_objects = pygame.sprite.Group()
 
     def createTilemap(self):
-        # Load the TMX map
         tmx_data = load_pygame('game/map/city.tmx')
         
-        # Create sprite groups for layers (if needed)
-        self.ground_tiles = pygame.sprite.LayeredUpdates()
-        self.block_tiles = pygame.sprite.LayeredUpdates()
-        
         self.blocks = pygame.sprite.LayeredUpdates()
-
-        #cycle through layers
         sprite_group = pygame.sprite.Group()
         for layer in tmx_data.layers:
-           # if layer.name in ('Ground', 'Buildings', 'Windmill', 'Overgrowth', 'Entrances')
-            if hasattr(layer,'data'):
-                for x,y,surf in layer.tiles():
+            if hasattr(layer, 'data'):
+                for x, y, surf in layer.tiles():
                     pos = (x * 32, y * 32)
-                    tile = Tile(pos = pos, surf = surf, groups = sprite_group)
+                    tile_id = tmx_data.get_tile_gid(x, y, layer.id)
+                    animation_frames = tmx_data.get_tile_animation_frames(tile_id)
+                    if animation_frames:
+                        tile = Tile(pos=pos, surf=None, groups=sprite_group, animation_frames=animation_frames)
+                    else:
+                        tile = Tile(pos=pos, surf=surf, groups=sprite_group)
+
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
-                        
-        self.all_sprites.add(sprite_group) # add the whole group to all_sprites.
-        
-        # find player start position from map 
-        for obj in tmx_data.objects:
-            if obj.name == 'Player':
-                player_start_x = obj.x // TILESIZE
-                player_start_y = obj.y // TILESIZE
-                self.player = Player(self, player_start_x, player_start_y)
-                break
-
-        
+                    elif layer.name == 'Roof':
+                        self.roof_tiles.add(tile)
+                    elif layer.name == 'Windmill':
+                        self.windmill_tiles.add(tile)
+            elif hasattr(layer, 'objects'):
+                 for obj in layer:
+                        if obj.name == 'Player':
+                                player_start_x = obj.x // TILESIZE
+                                player_start_y = obj.y // TILESIZE
+                                self.player = Player(self, player_start_x, player_start_y)
+                        elif layer.name == "WindmillAnimated":
+                             tile_id = obj.gid
+                             pos = (obj.x, obj.y)
+                             animation_frames = tmx_data.get_tile_animation_frames(tile_id)
+                             tile = Tile(pos = pos, surf = None, groups = self.animated_objects, animation_frames = animation_frames)
+            elif hasattr(layer, 'image'):
+                  self.image_layers.append(layer)
+        self.all_sprites.add(sprite_group)
         return self.player
-                                           
 
     def new(self):
-        # new game start
         self.playing = True
-
         self.all_sprites = pygame.sprite.LayeredUpdates()
-        self.npcs = pygame.sprite.LayeredUpdates()
-        self.enemies = pygame.sprite.LayeredUpdates()
-        self.attacks = pygame.sprite.LayeredUpdates()
-        
-        self.player = self.createTilemap() # assign returned player to self.player
+        self.player = self.createTilemap()
         if self.player is not None:
             self.all_sprites.add(self.player)
-            
-        
 
     def events(self):
-        # game loop events
-        for event in pygame.event.get(): #every single event that happens in pygame
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.playing = False
                 self.running = False
-            #The following code has been removed as dialogue has been removed.
-            # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_RETURN:
-            #        for npc in self.npcs:
-            #           if abs(self.player.rect.centerx - npc.rect.centerx) < TILESIZE and abs(self.player.rect.centery - npc.rect.centery) < TILESIZE :
-            #             npc.talk()
 
-                
     def update(self):
-        # game loop updates
         self.all_sprites.update()
-        
+        self.windmill_tiles.update()
+        self.animated_objects.update()
 
     def draw(self):
-        # game loop draw
         self.screen.fill(BLACK)
+        for layer in self.image_layers:
+           self.screen.blit(layer.image, (layer.offsetx, layer.offsety))
         self.all_sprites.draw(self.screen)
-        #The following code has been removed as dialogue has been removed.
-        #draw text for npcs
-        # for npc in self.npcs:
-        #     if npc.talking:
-        #         text_surface = self.font.render(npc.dialogue[npc.dialogue_index], True, BLACK)
-        #         text_rect = text_surface.get_rect(center = (WIN_WIDTH/2, WIN_HEIGHT/2))
-        #         self.screen.blit(text_surface, text_rect)
+        self.roof_tiles.draw(self.screen)
+        self.windmill_tiles.draw(self.screen)
+        self.animated_objects.draw(self.screen)
         self.clock.tick(FPS)
-        pygame.display.update() #update the screen
+        pygame.display.update()
 
     def main(self):
-        # game loop
         while self.playing:
             self.events()
-            self.update() #so that the game isn't a static image
-            self.draw() #displays sprites
+            self.update()
+            self.draw()
         self.running = False
     
     def game_over(self):
@@ -146,12 +150,12 @@ class Game:
             pygame.display.update()
         
 
-g = Game() #converts class into object
-g.intro_screen()#creates game object and runs intro_screen method. skips for now
-g.new() #creates sprite groups and player objects
+g = Game()
+g.intro_screen()
+g.new()
 while g.running:
-    g.main() #game loop
-    g.game_over() #doesn't do anything currently but will do later
+    g.main()
+    g.game_over()
 
 pygame.quit()
 sys.exit()
