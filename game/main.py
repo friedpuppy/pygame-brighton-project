@@ -6,30 +6,6 @@ from dialogues import *
 import sys
 from pytmx.util_pygame import load_pygame
 
-class Camera:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.state = pygame.Rect(0, 0, width, height)
-
-    def apply(self, entity):
-        return entity.rect.move(self.state.topleft)
-
-    def apply_rect(self, rect):
-        return rect.move(self.state.topleft)
-
-    def update(self, target):
-        x = -target.rect.centerx + int(WIN_WIDTH / 2)
-        y = -target.rect.centery + int(WIN_HEIGHT / 2)
-
-        # Limit scrolling to map size
-        x = min(0, x)  # Left
-        y = min(0, y)  # Top
-        x = max(-(self.width - WIN_WIDTH), x)  # Right
-        y = max(-(self.height - WIN_HEIGHT), y)  # Bottom
-
-        self.state = pygame.Rect(x, y, self.width, self.height)
-
 class Quest:
     def __init__(self, quest_id, name):
         self.quest_id = quest_id
@@ -75,7 +51,7 @@ class Game:
         self.player = None
         self.roof_tiles = pygame.sprite.Group()
         self.windmill_tiles = pygame.sprite.Group()
-        self.street_tiles = pygame.sprite.Group()
+        self.street_tiles = pygame.sprite.Group() #added this line
         self.blocks = pygame.sprite.LayeredUpdates()
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.npcs = pygame.sprite.Group()
@@ -100,6 +76,9 @@ class Game:
     def createTilemap(self):
         tmx_data = load_pygame('game/map/brighton_seafront.tmx')
 
+
+        
+
         map_width = tmx_data.width * tmx_data.tilewidth
         map_height = tmx_data.height * tmx_data.tileheight
         self.camera = Camera(map_width, map_height)
@@ -108,10 +87,8 @@ class Game:
         for layer in tmx_data.layers:
             if hasattr(layer,'data'):
                 for x,y,surf in layer.tiles():
-                    pos = (x * TILESIZE, y * TILESIZE)
+                    pos = (x * 32, y * 32)
                     tile = Tile(pos = pos, surf = surf, groups = sprite_group)
-                    sprite_group.add(tile)
-
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
                     elif layer.name == 'Roof':
@@ -131,11 +108,12 @@ class Game:
             elif obj.type == 'NPC':
                 npc_start_x = obj.x // TILESIZE
                 npc_start_y = obj.y // TILESIZE
-                npc_name = obj.properties.get("npc_name")
+                # Changed this line:
+                npc_name = obj.properties.get("npc_name") # Changed this line
                 npc_dialogue_key = obj.properties.get("dialogue_key")
                 npc_sprite = self.character_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
                 if npc_name is None:
-                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
+                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!") # Changed this line
                     continue  # Skip this NPC and move to the next one
                 if npc_dialogue_key is None:
                     print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
@@ -167,6 +145,10 @@ class Game:
         self.screen.fill(BLACK)
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
+        for tile in self.roof_tiles:
+            self.screen.blit(tile.image, self.camera.apply(tile))
+        for tile in self.windmill_tiles:
+            self.screen.blit(tile.image, self.camera.apply(tile))
         self.dialogue_box.draw()
         self.draw_money()
         self.draw_quest_log()
