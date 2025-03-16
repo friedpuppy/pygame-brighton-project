@@ -3,6 +3,31 @@ from config import *
 import math
 import random
 
+
+class Camera:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.state = pygame.Rect(0, 0, width, height)
+
+    def apply(self, entity):
+        return entity.rect.move(self.state.topleft)
+
+    def apply_rect(self, rect):
+        return rect.move(self.state.topleft)
+
+    def update(self, target):
+        x = -target.rect.centerx + int(WIN_WIDTH / 2)
+        y = -target.rect.centery + int(WIN_HEIGHT / 2)
+
+        # Limit scrolling to map size
+        x = min(0, x)  # Left
+        y = min(0, y)  # Top
+        x = max(-(self.width - WIN_WIDTH), x)  # Right
+        y = max(-(self.height - WIN_HEIGHT), y)  # Bottom
+
+        self.state = pygame.Rect(x, y, self.width, self.height)
+
 class Spritesheet:
     # ... (Spritesheet class remains the same) ...
     def __init__(self, file):
