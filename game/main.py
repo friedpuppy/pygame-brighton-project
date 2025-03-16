@@ -75,6 +75,7 @@ class Game:
         self.player = None
         self.roof_tiles = pygame.sprite.Group()
         self.windmill_tiles = pygame.sprite.Group()
+        self.street_tiles = pygame.sprite.Group()
         self.blocks = pygame.sprite.LayeredUpdates()
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.npcs = pygame.sprite.Group()
@@ -107,14 +108,18 @@ class Game:
         for layer in tmx_data.layers:
             if hasattr(layer,'data'):
                 for x,y,surf in layer.tiles():
-                    pos = (x * 32, y * 32)
+                    pos = (x * TILESIZE, y * TILESIZE)
                     tile = Tile(pos = pos, surf = surf, groups = sprite_group)
+                    sprite_group.add(tile)
+
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
                     elif layer.name == 'Roof':
                         self.roof_tiles.add(tile)
                     elif layer.name == 'Windmill':
                         self.windmill_tiles.add(tile)
+                    elif layer.name == 'Street':
+                        self.street_tiles.add(tile)
 
         self.all_sprites.add(sprite_group)
 
@@ -126,12 +131,11 @@ class Game:
             elif obj.type == 'NPC':
                 npc_start_x = obj.x // TILESIZE
                 npc_start_y = obj.y // TILESIZE
-                # Changed this line:
-                npc_name = obj.properties.get("npc_name") # Changed this line
+                npc_name = obj.properties.get("npc_name")
                 npc_dialogue_key = obj.properties.get("dialogue_key")
                 npc_sprite = self.character_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
                 if npc_name is None:
-                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!") # Changed this line
+                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
                     continue  # Skip this NPC and move to the next one
                 if npc_dialogue_key is None:
                     print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
@@ -163,10 +167,6 @@ class Game:
         self.screen.fill(BLACK)
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
-        for tile in self.roof_tiles:
-            self.screen.blit(tile.image, self.camera.apply(tile))
-        for tile in self.windmill_tiles:
-            self.screen.blit(tile.image, self.camera.apply(tile))
         self.dialogue_box.draw()
         self.draw_money()
         self.draw_quest_log()

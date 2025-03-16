@@ -20,7 +20,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):  # the game is passed in as an object
 
         self.game = game
-        self._layer = PLAYER_LAYER
+        self._layer = ROAD_LAYER + 1
         self.groups = self.game.all_sprites  # this adds the player to the all_sprites group
         pygame.sprite.Sprite.__init__(self, self.groups)
 
@@ -70,8 +70,8 @@ class Player(pygame.sprite.Sprite):
         if direction == "x":
             hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
             if hits:
-                if self.x_change > 0:
-                    self.rect.x = hits[0].rect.left - self.rect.width
+                if self.x_change > 0: #moving right
+                    self.rect.x = hits[0].rect.left - self.rect.width #move to the left of the block
                 if self.x_change < 0:
                     self.rect.x = hits[0].rect.right
 
@@ -80,7 +80,7 @@ class Player(pygame.sprite.Sprite):
             if hits:
                 if self.y_change > 0:
                     self.rect.y = hits[0].rect.top - self.rect.height
-                if self.y_change < 0:
+                if self.y_change < 0: #moving up
                     self.rect.y = hits[0].rect.bottom
 
 class Button:
@@ -104,8 +104,7 @@ class Button:
         self.rect.x = self.x
         self.rect.y = self.y
 
-        self.text = self.font.render(self.content, True,
-                                     self.fg)  # 'True' is for antialiasing turned on
+        self.text = self.font.render(self.content, True, self.fg)  # 'True' is for antialiasing turned on
         self.text_rect = self.text.get_rect(center=(self.width / 2, self.height / 2))
         self.image.blit(self.text, self.text_rect)
 
@@ -126,7 +125,7 @@ class Tile(pygame.sprite.Sprite):
 class NPC(pygame.sprite.Sprite):
     def __init__(self, game, x, y, name, dialogue_key, sprite): #added sprite
         self.game = game
-        self._layer = PLAYER_LAYER
+        self._layer = ROAD_LAYER + 1
         self.groups = self.game.all_sprites, self.game.npcs
         pygame.sprite.Sprite.__init__(self, self.groups)
 
