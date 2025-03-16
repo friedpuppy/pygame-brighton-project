@@ -4,6 +4,7 @@ import math
 import random
 
 class Spritesheet:
+    # ... (Spritesheet class remains the same) ...
     def __init__(self, file):
         self.sheet = pygame.image.load(file).convert()
 
@@ -14,7 +15,8 @@ class Spritesheet:
         return sprite
 
 
-class Player(pygame.sprite.Sprite):  # calls the __init__ method for the inherited class
+class Player(pygame.sprite.Sprite):
+    # ... (Player class remains the same) ...
     def __init__(self, game, x, y):  # the game is passed in as an object
 
         self.game = game
@@ -82,6 +84,7 @@ class Player(pygame.sprite.Sprite):  # calls the __init__ method for the inherit
                     self.rect.y = hits[0].rect.bottom
 
 class Button:
+    # ... (Button class remains the same) ...
     def __init__(self, x, y, width, height, fg, bg, content, fontsize):
         self.font = pygame.font.Font('monofonto rg.otf', fontsize)
         self.content = content
@@ -114,7 +117,43 @@ class Button:
         return False
 
 class Tile(pygame.sprite.Sprite):
+    # ... (Tile class remains the same) ...
     def __init__(self,pos,surf,groups):
         super().__init__(groups)
         self.image = surf
         self.rect = self.image.get_rect(topleft = pos)
+
+class NPC(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, name, dialogue_key, sprite): #added sprite
+        self.game = game
+        self._layer = PLAYER_LAYER
+        self.groups = self.game.all_sprites, self.game.npcs
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+        self.width = TILESIZE
+        self.height = TILESIZE
+
+        self.name = name
+        self.dialogue_key = dialogue_key
+        self.dialogue = self.game.dialogues.get(self.dialogue_key)
+
+        self.image = sprite #changed this line
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        pass
+
+    def interact(self):
+        if self.dialogue:
+            next_line = self.dialogue.next_line()
+            if next_line:
+                self.game.dialogue_box.text = next_line
+                self.game.dialogue_box.create_text_surface()
+                self.game.dialogue_box.toggle()
+            else:
+                self.game.dialogue_box.toggle()
+                self.dialogue.reset()
