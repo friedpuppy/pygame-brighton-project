@@ -6,35 +6,6 @@ from dialogues import *
 import sys
 from pytmx.util_pygame import load_pygame
 
-class Quest:
-    def __init__(self, quest_id, name):
-        self.quest_id = quest_id
-        self.name = name
-        self.stages = {}  # Dictionary of stages (stage_number: {"description": "", "complete": False, "success": False, "failure": False, "trigger": None})
-        self.current_stage = 0
-
-    def add_stage(self, stage_number, description, trigger=None):
-        self.stages[stage_number] = {"description": description, "complete": False, "success": False, "failure": False, "trigger": trigger}
-
-    def advance_stage(self, stage_number):
-        if stage_number in self.stages:
-            self.current_stage = stage_number
-            print(f"Quest '{self.name}' advanced to stage {stage_number}: {self.stages[stage_number]['description']}")
-            if self.stages[stage_number]["trigger"]:
-                self.stages[stage_number]["trigger"]()
-
-    def complete_stage(self, stage_number, success=True):
-        if stage_number in self.stages:
-            self.stages[stage_number]["complete"] = True
-            self.stages[stage_number]["success"] = success
-            self.stages[stage_number]["failure"] = not success
-            print(f"Quest '{self.name}' stage {stage_number} {'succeeded' if success else 'failed'}")
-
-    def get_current_stage_description(self):
-        if self.current_stage in self.stages:
-            return self.stages[self.current_stage]["description"]
-        return "No current stage."
-
 class Game:
     def __init__(self):
         pygame.init()
@@ -51,15 +22,18 @@ class Game:
         self.player = None
         self.roof_tiles = pygame.sprite.Group()
         self.windmill_tiles = pygame.sprite.Group()
-        self.street_tiles = pygame.sprite.Group() #added this line
+        self.street_tiles = pygame.sprite.Group()  # added this line
         self.blocks = pygame.sprite.LayeredUpdates()
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.npcs = pygame.sprite.Group()
         self.dialogues = dialogues
-        self.dialogue_box = DialogueBox(self, "", 50, 350)
+        self.dialogue_box = DialogueBox(self, "", 50, 550)
         self.money = 0
         self.quest_log = {}  # Dictionary to store quests (quest_id: Quest object)
         self.create_quests()
+
+        # Create the smaller surface
+        self.small_surface = pygame.Surface((WIN_WIDTH // 2, WIN_HEIGHT // 2)) #changed this line
 
     def create_quests(self):
         # Create the "Repair the Pier" quest
@@ -75,9 +49,6 @@ class Game:
 
     def createTilemap(self):
         tmx_data = load_pygame('game/map/brighton_seafront.tmx')
-
-
-        
 
         map_width = tmx_data.width * tmx_data.tilewidth
         map_height = tmx_data.height * tmx_data.tileheight
@@ -142,16 +113,26 @@ class Game:
         self.camera.update(self.player)
 
     def draw(self):
-        self.screen.fill(BLACK)
-        for sprite in self.all_sprites:
-            self.screen.blit(sprite.image, self.camera.apply(sprite))
-        for tile in self.roof_tiles:
-            self.screen.blit(tile.image, self.camera.apply(tile))
+        # Draw to the smaller surface
+        self.small_surface.fill(BLACK) #changed this line
+        for tile in self.street_tiles:
+            self.small_surface.blit(tile.image, self.camera.apply(tile))
+        for tile in self.blocks:
+            self.small_surface.blit(tile.image, self.camera.apply(tile))
         for tile in self.windmill_tiles:
-            self.screen.blit(tile.image, self.camera.apply(tile))
+            self.small_surface.blit(tile.image, self.camera.apply(tile))
+        for tile in self.roof_tiles:
+            self.small_surface.blit(tile.image, self.camera.apply(tile))
+        for sprite in self.all_sprites:
+            self.small_surface.blit(sprite.image, self.camera.apply(sprite))
         self.dialogue_box.draw()
         self.draw_money()
         self.draw_quest_log()
+
+        # Scale the smaller surface to the main screen
+        scaled_surface = pygame.transform.scale(self.small_surface, (WIN_WIDTH, WIN_HEIGHT)) #changed this line
+        self.screen.blit(scaled_surface, (0, 0)) #changed this line
+
         self.clock.tick(FPS)
         pygame.display.update()
 
@@ -217,6 +198,35 @@ class Game:
             stage_text = self.font.render(f"Current Stage: {quest.get_current_stage_description()}", True, WHITE)
             self.screen.blit(stage_text, (10, y_offset))
             y_offset += 30
+
+class Quest:
+    def __init__(self, quest_id, name):
+        self.quest_id = quest_id
+        self.name = name
+        self.stages = {}  # Dictionary of stages (stage_number: {"description": "", "complete": False, "success": False, "failure": False, "trigger": None})
+        self.current_stage = 0
+
+    def add_stage(self, stage_number, description, trigger=None):
+        self.stages[stage_number] = {"description": description, "complete": False, "success": False, "failure": False, "trigger": trigger}
+
+    def advance_stage(self, stage_number):
+        if stage_number in self.stages:
+            self.current_stage = stage_number
+            print(f"Quest '{self.name}' advanced to stage {stage_number}: {self.stages[stage_number]['description']}")
+            if self.stages[stage_number]["trigger"]:
+                self.stages[stage_number]["trigger"]()
+
+    def complete_stage(self, stage_number, success=True):
+        if stage_number in self.stages:
+            self.stages[stage_number]["complete"] = True
+            self.stages[stage_number]["success"] = success
+            self.stages[stage_number]["failure"] = not success
+            print(f"Quest '{self.name}' stage {stage_number} {'succeeded' if success else 'failed'}")
+
+    def get_current_stage_description(self):
+        if self.current_stage in self.stages:
+            return self.stages[self.current_stage]["description"]
+        return "No current stage."
 
 g = Game()
 g.intro_screen()

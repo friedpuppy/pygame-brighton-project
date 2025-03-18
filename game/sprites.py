@@ -6,27 +6,38 @@ import random
 
 class Camera:
     def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.state = pygame.Rect(0, 0, width, height)
+        self.width = width  # Map width in pixels
+        self.height = height  # Map height in pixels
+        self.zoom_level = 2.0
+        self.state = pygame.Rect(0, 0, WIN_WIDTH, WIN_HEIGHT)
 
     def apply(self, entity):
-        return entity.rect.move(self.state.topleft)
+        # Calculate the scaled position of the entity
+        scaled_x = entity.rect.x * self.zoom_level
+        scaled_y = entity.rect.y * self.zoom_level
+        
+        # Create a new rect with the scaled position and size
+        scaled_rect = pygame.Rect(scaled_x, scaled_y, entity.rect.width * self.zoom_level, entity.rect.height * self.zoom_level)
+        
+        # Move the scaled rect by the camera's offset
+        return scaled_rect.move(self.state.topleft)
 
     def apply_rect(self, rect):
         return rect.move(self.state.topleft)
 
     def update(self, target):
-        x = -target.rect.centerx + int(WIN_WIDTH / 2)
-        y = -target.rect.centery + int(WIN_HEIGHT / 2)
+        # Adjust camera movement based on zoom level
+        x = -target.rect.centerx * self.zoom_level + int(WIN_WIDTH / 2)
+        y = -target.rect.centery * self.zoom_level + int(WIN_HEIGHT / 2)
 
-        # Limit scrolling to map size
+        # Limit scrolling to map size (adjusted for zoom)
         x = min(0, x)  # Left
         y = min(0, y)  # Top
-        x = max(-(self.width - WIN_WIDTH), x)  # Right
-        y = max(-(self.height - WIN_HEIGHT), y)  # Bottom
+        x = max(-(self.width * self.zoom_level - WIN_WIDTH), x)  # Right
+        y = max(-(self.height * self.zoom_level - WIN_HEIGHT), y)  # Bottom
 
-        self.state = pygame.Rect(x, y, self.width, self.height)
+        self.state = pygame.Rect(x, y, WIN_WIDTH, WIN_HEIGHT)
+
 
 class Spritesheet:
     # ... (Spritesheet class remains the same) ...

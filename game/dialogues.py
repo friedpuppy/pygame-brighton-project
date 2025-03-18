@@ -3,13 +3,13 @@ import pygame
 
 class DialogueBox:
     # ... (DialogueBox class remains the same) ...
-    def __init__(self, game, text, x, y, width=300, height=100, font_size=20):
+    def __init__(self, game, text, x, y, width=600, height=200, font_size=30): #changed this line
         self.game = game
         self.text = text
         self.x = x
         self.y = y
-        self.width = width
-        self.height = height
+        self.width = width #changed this line
+        self.height = height #changed this line
         self.font = pygame.font.Font('monofonto rg.otf', font_size)
         self.color = (255, 255, 255)  # White
         self.background_color = (0, 0, 0)  # Black
