@@ -5,6 +5,9 @@ from config import *
 from dialogues import *
 import sys
 from pytmx.util_pygame import load_pygame
+import pyscroll
+import pyscroll.data
+import random
 
 class Game:
     def __init__(self):
@@ -16,24 +19,18 @@ class Game:
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
+        self.enemy_spritesheet = Spritesheet('game/img/enemy.png') #added this line
 
         self.intro_background = pygame.image.load('./splash.png')
 
         self.player = None
-        self.roof_tiles = pygame.sprite.Group()
-        self.windmill_tiles = pygame.sprite.Group()
-        self.street_tiles = pygame.sprite.Group()  # added this line
-        self.blocks = pygame.sprite.LayeredUpdates()
-        self.all_sprites = pygame.sprite.LayeredUpdates()
         self.npcs = pygame.sprite.Group()
         self.dialogues = dialogues
         self.dialogue_box = DialogueBox(self, "", 50, 550)
         self.money = 0
         self.quest_log = {}  # Dictionary to store quests (quest_id: Quest object)
         self.create_quests()
-
-        # Create the smaller surface
-        self.small_surface = pygame.Surface((WIN_WIDTH // 2, WIN_HEIGHT // 2)) #changed this line
+        self.all_sprites = pygame.sprite.LayeredUpdates() #added this line
 
     def create_quests(self):
         # Create the "Repair the Pier" quest
@@ -50,26 +47,25 @@ class Game:
     def createTilemap(self):
         tmx_data = load_pygame('game/map/brighton_seafront.tmx')
 
-        map_width = tmx_data.width * tmx_data.tilewidth
-        map_height = tmx_data.height * tmx_data.tileheight
-        self.camera = Camera(map_width, map_height)
+        # Create the pyscroll data source
+        map_data = pyscroll.data.TiledMapData(tmx_data)
 
-        sprite_group = pygame.sprite.Group()
+        # Create the pyscroll map
+        self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
+        self.map_layer.zoom = 2 #changed this line
+
+        # Create the pyscroll group
+        self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
+        self.blocks = pygame.sprite.Group()
+
         for layer in tmx_data.layers:
             if hasattr(layer,'data'):
                 for x,y,surf in layer.tiles():
                     pos = (x * 32, y * 32)
-                    tile = Tile(pos = pos, surf = surf, groups = sprite_group)
+                    tile = Tile(pos = pos, surf = surf, groups = self.group)
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
-                    elif layer.name == 'Roof':
-                        self.roof_tiles.add(tile)
-                    elif layer.name == 'Windmill':
-                        self.windmill_tiles.add(tile)
-                    elif layer.name == 'Street':
-                        self.street_tiles.add(tile)
 
-        self.all_sprites.add(sprite_group)
 
         for obj in tmx_data.objects:
             if obj.name == 'Player':
@@ -82,7 +78,7 @@ class Game:
                 # Changed this line:
                 npc_name = obj.properties.get("npc_name") # Changed this line
                 npc_dialogue_key = obj.properties.get("dialogue_key")
-                npc_sprite = self.character_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
+                npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE) #changed this line
                 if npc_name is None:
                     print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!") # Changed this line
                     continue  # Skip this NPC and move to the next one
@@ -90,14 +86,15 @@ class Game:
                     print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
                     continue  # Skip this NPC
                 NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
-
+                self.group.add(self.npcs)
         return self.player
 
     def new(self):
         self.playing = True
-        self.player = self.createTilemap()
+        self.createTilemap()
         if self.player is not None:
-            self.all_sprites.add(self.player)
+            self.group.add(self.player)
+        #self.all_sprites.add(self.group)
 
     def events(self):
         for event in pygame.event.get():
@@ -110,28 +107,14 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
-        self.camera.update(self.player)
+        self.group.center(self.player.rect.center)
 
     def draw(self):
-        # Draw to the smaller surface
-        self.small_surface.fill(BLACK) #changed this line
-        for tile in self.street_tiles:
-            self.small_surface.blit(tile.image, self.camera.apply(tile))
-        for tile in self.blocks:
-            self.small_surface.blit(tile.image, self.camera.apply(tile))
-        for tile in self.windmill_tiles:
-            self.small_surface.blit(tile.image, self.camera.apply(tile))
-        for tile in self.roof_tiles:
-            self.small_surface.blit(tile.image, self.camera.apply(tile))
-        for sprite in self.all_sprites:
-            self.small_surface.blit(sprite.image, self.camera.apply(sprite))
+        self.screen.fill(BLACK)
+        self.group.draw(self.screen)
         self.dialogue_box.draw()
         self.draw_money()
         self.draw_quest_log()
-
-        # Scale the smaller surface to the main screen
-        scaled_surface = pygame.transform.scale(self.small_surface, (WIN_WIDTH, WIN_HEIGHT)) #changed this line
-        self.screen.blit(scaled_surface, (0, 0)) #changed this line
 
         self.clock.tick(FPS)
         pygame.display.update()
@@ -237,3 +220,4 @@ while g.running:
 
 pygame.quit()
 sys.exit()
+

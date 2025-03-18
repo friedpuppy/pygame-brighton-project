@@ -1,46 +1,8 @@
 import pygame
 from config import *
-import math
-import random
-
-
-class Camera:
-    def __init__(self, width, height):
-        self.width = width  # Map width in pixels
-        self.height = height  # Map height in pixels
-        self.zoom_level = 2.0
-        self.state = pygame.Rect(0, 0, WIN_WIDTH, WIN_HEIGHT)
-
-    def apply(self, entity):
-        # Calculate the scaled position of the entity
-        scaled_x = entity.rect.x * self.zoom_level
-        scaled_y = entity.rect.y * self.zoom_level
-        
-        # Create a new rect with the scaled position and size
-        scaled_rect = pygame.Rect(scaled_x, scaled_y, entity.rect.width * self.zoom_level, entity.rect.height * self.zoom_level)
-        
-        # Move the scaled rect by the camera's offset
-        return scaled_rect.move(self.state.topleft)
-
-    def apply_rect(self, rect):
-        return rect.move(self.state.topleft)
-
-    def update(self, target):
-        # Adjust camera movement based on zoom level
-        x = -target.rect.centerx * self.zoom_level + int(WIN_WIDTH / 2)
-        y = -target.rect.centery * self.zoom_level + int(WIN_HEIGHT / 2)
-
-        # Limit scrolling to map size (adjusted for zoom)
-        x = min(0, x)  # Left
-        y = min(0, y)  # Top
-        x = max(-(self.width * self.zoom_level - WIN_WIDTH), x)  # Right
-        y = max(-(self.height * self.zoom_level - WIN_HEIGHT), y)  # Bottom
-
-        self.state = pygame.Rect(x, y, WIN_WIDTH, WIN_HEIGHT)
 
 
 class Spritesheet:
-    # ... (Spritesheet class remains the same) ...
     def __init__(self, file):
         self.sheet = pygame.image.load(file).convert()
 
@@ -52,13 +14,9 @@ class Spritesheet:
 
 
 class Player(pygame.sprite.Sprite):
-    # ... (Player class remains the same) ...
     def __init__(self, game, x, y):  # the game is passed in as an object
-
         self.game = game
-        self._layer = ROAD_LAYER + 1
-        self.groups = self.game.all_sprites  # this adds the player to the all_sprites group
-        pygame.sprite.Sprite.__init__(self, self.groups)
+        pygame.sprite.Sprite.__init__(self)
 
         self.x = x * TILESIZE
         self.y = y * TILESIZE
@@ -77,15 +35,17 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = self.x  # tells pygame the coordinates of our rectangle
         self.rect.y = self.y
 
+
     def update(self):
         self.movement()
 
         self.rect.x += self.x_change
         self.collide_blocks('x')
-        self.rect.y += self.y_change
         self.collide_blocks('y')
         self.x_change = 0
         self.y_change = 0
+
+
 
     def movement(self):
         keys = pygame.key.get_pressed()  # list of every key pressed on keyboard stored in 'keys'
@@ -120,7 +80,6 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y = hits[0].rect.bottom
 
 class Button:
-    # ... (Button class remains the same) ...
     def __init__(self, x, y, width, height, fg, bg, content, fontsize):
         self.font = pygame.font.Font('monofonto rg.otf', fontsize)
         self.content = content
@@ -152,7 +111,6 @@ class Button:
         return False
 
 class Tile(pygame.sprite.Sprite):
-    # ... (Tile class remains the same) ...
     def __init__(self,pos,surf,groups):
         super().__init__(groups)
         self.image = surf
@@ -161,8 +119,7 @@ class Tile(pygame.sprite.Sprite):
 class NPC(pygame.sprite.Sprite):
     def __init__(self, game, x, y, name, dialogue_key, sprite): #added sprite
         self.game = game
-        self._layer = ROAD_LAYER + 1
-        self.groups = self.game.all_sprites, self.game.npcs
+        self.groups = self.game.npcs
         pygame.sprite.Sprite.__init__(self, self.groups)
 
         self.x = x * TILESIZE
@@ -189,6 +146,19 @@ class NPC(pygame.sprite.Sprite):
                 self.game.dialogue_box.text = next_line
                 self.game.dialogue_box.create_text_surface()
                 self.game.dialogue_box.toggle()
+                if self.dialogue.money_given > 0 and not self.dialogue.has_given_money:
+                    self.game.add_money(self.dialogue.money_given)
+                    self.dialogue.has_given_money = True
             else:
                 self.game.dialogue_box.toggle()
                 self.dialogue.reset()
+                if self.dialogue.quest_stage_advance == "talked_to_villager1":
+                    self.game.quest_log["repair_pier"].advance_stage(20)
+                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["villager1_done"]
+                elif self.dialogue.quest_stage_advance == "talked_to_villager2":
+                    self.game.quest_log["repair_pier"].advance_stage(30)
+                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["villager2_done"]
+                elif self.dialogue.quest_stage_advance == "talked_to_guard1":
+                    self.game.quest_log["repair_pier"].advance_stage(100)
+                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["guard1_done"]
+
