@@ -1,6 +1,5 @@
-# main.py
 import pygame
-from sprites import *  # Import everything from sprites.py
+from sprites import *
 from config import *
 from dialogues import *
 import sys
@@ -21,7 +20,7 @@ class Game:
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
         self.enemy_spritesheet = Spritesheet('game/img/enemy.png')
 
-        self.intro_background = pygame.image.load('./splash.png')
+        self.intro_background = pygame.image.load('game/img/BPC00100.jpg')
 
         self.player = None
         self.npcs = pygame.sprite.Group()
@@ -30,7 +29,8 @@ class Game:
         self.money = 0
         self.quest_log = {}
         self.create_quests()
-        self.all_sprites = pygame.sprite.LayeredUpdates()
+        self.collision_objects = pygame.sprite.Group() #added this line
+        self.blocks = pygame.sprite.Group() #added this line
 
     def create_quests(self):
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
@@ -44,42 +44,58 @@ class Game:
         print("The pier has been repaired!")
 
     def createTilemap(self):
-        tmx_data = load_pygame('game/map/brighton_seafront.tmx')
-        map_data = pyscroll.data.TiledMapData(tmx_data)
-        self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
-        self.map_layer.zoom = 2
-        self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
-        self.blocks = pygame.sprite.Group()
+        try:
+            tmx_data = load_pygame('game/map/brighton_seafront.tmx')
+            map_data = pyscroll.data.TiledMapData(tmx_data)
+            self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
+            self.map_layer.zoom = 2
+            self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=GROUND_LAYER)
+            self.group.map_rect = self.map_layer.map_rect
 
-        for layer in tmx_data.layers:
-            if hasattr(layer, 'data'):
-                for x, y, surf in layer.tiles():
-                    pos = (x * 32, y * 32)
-                    tile = Tile(pos=pos, surf=surf, groups=self.group)
-                    if layer.name == 'Buildings':
-                        self.blocks.add(tile)
+            for layer in tmx_data.layers:
+                if hasattr(layer, 'data'):
+                    for x, y, surf in layer.tiles():
+                        pos = (x * 32, y * 32)
+                        if layer.name == 'Buildings':
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
+                        else:
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                        self.group.add(tile, layer=tile.layer)
 
-        for obj in tmx_data.objects:
-            if obj.name == 'Player':
-                player_start_x = obj.x // TILESIZE
-                player_start_y = obj.y // TILESIZE
-                self.player = Player(self, player_start_x, player_start_y)
-                self.group.add(self.player)
-                self.all_sprites.add(self.player) #added this line
-            elif obj.type == 'NPC':
-                npc_start_x = obj.x // TILESIZE
-                npc_start_y = obj.y // TILESIZE
-                npc_name = obj.properties.get("npc_name")
-                npc_dialogue_key = obj.properties.get("dialogue_key")
-                npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
-                if npc_name is None:
-                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
-                    continue
-                if npc_dialogue_key is None:
-                    print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
-                    continue
-                NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
-                self.group.add(self.npcs)
+            for obj in tmx_data.objects:
+                if obj.name == 'Player':
+                    player_start_x = obj.x // TILESIZE
+                    player_start_y = obj.y // TILESIZE
+                    self.player = Player(self, player_start_x, player_start_y)
+                    self.group.add(self.player, layer=PLAYER_LAYER)
+                elif obj.type == 'NPC':
+                    self.create_npc(obj)
+            
+            # Move this line here, after the player is created
+            if self.player:
+                self.player.collide_objects = self.collision_objects
+        except Exception as e:
+            print(f"Error creating tilemap: {e}")
+
+    def create_npc(self, obj):
+        try:
+            npc_start_x = obj.x // TILESIZE
+            npc_start_y = obj.y // TILESIZE
+            npc_name = obj.properties.get("npc_name")
+            npc_dialogue_key = obj.properties.get("dialogue_key")
+            npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
+            if npc_name is None:
+                print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
+                return
+            if npc_dialogue_key is None:
+                print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
+                return
+            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
+            self.group.add(npc, layer=NPC_LAYER)
+            self.collision_objects.add(npc)
+            self.npcs.add(npc)
+        except Exception as e:
+            print(f"Error creating NPC: {e}")
 
     def new(self):
         self.playing = True
@@ -95,7 +111,7 @@ class Game:
                     self.check_npc_interaction()
 
     def update(self):
-        self.all_sprites.update()
+        self.group.update()
         self.group.center(self.player.rect.center)
 
     def draw(self):
@@ -121,7 +137,7 @@ class Game:
     def intro_screen(self):
         intro = True
 
-        title = self.font.render('Hello World', True, BLACK)
+        title = self.font.render('A Pier to the Past', True, BLACK)
         title_rect = title.get_rect(x=10, y=10)
 
         play_button = Button(10, 50, 100, 50, WHITE, BLACK, 'Play', 32)

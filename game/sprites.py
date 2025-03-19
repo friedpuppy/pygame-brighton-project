@@ -132,7 +132,11 @@ class NPC(pygame.sprite.Sprite):
         self.dialogue_key = dialogue_key
         self.dialogue = self.game.dialogues.get(self.dialogue_key)
 
-        self.image = sprite #changed this line
+        if sprite is None: #added this line
+            self.image = pygame.Surface((self.width, self.height)) #added this line
+            self.image.fill((255, 0, 0)) #added this line
+        else: #added this line
+            self.image = sprite #changed this line
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
