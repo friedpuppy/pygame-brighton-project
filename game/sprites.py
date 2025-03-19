@@ -41,6 +41,7 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x += self.x_change
         self.collide_blocks('x')
+        self.rect.y += self.y_change
         self.collide_blocks('y')
         self.x_change = 0
         self.y_change = 0
@@ -161,4 +162,3 @@ class NPC(pygame.sprite.Sprite):
                 elif self.dialogue.quest_stage_advance == "talked_to_guard1":
                     self.game.quest_log["repair_pier"].advance_stage(100)
                     self.game.dialogues[self.dialogue_key] = self.game.dialogues["guard1_done"]
-

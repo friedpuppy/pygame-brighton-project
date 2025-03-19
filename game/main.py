@@ -19,7 +19,7 @@ class Game:
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
-        self.enemy_spritesheet = Spritesheet('game/img/enemy.png') #added this line
+        self.enemy_spritesheet = Spritesheet('game/img/enemy.png')
 
         self.intro_background = pygame.image.load('./splash.png')
 
@@ -28,12 +28,11 @@ class Game:
         self.dialogues = dialogues
         self.dialogue_box = DialogueBox(self, "", 50, 550)
         self.money = 0
-        self.quest_log = {}  # Dictionary to store quests (quest_id: Quest object)
+        self.quest_log = {}
         self.create_quests()
-        self.all_sprites = pygame.sprite.LayeredUpdates() #added this line
+        self.all_sprites = pygame.sprite.LayeredUpdates()
 
     def create_quests(self):
-        # Create the "Repair the Pier" quest
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
         repair_pier_quest.add_stage(10, "Talk to Villager 1 about the pier.")
         repair_pier_quest.add_stage(20, "Talk to Villager 2 about the pier.")
@@ -46,55 +45,45 @@ class Game:
 
     def createTilemap(self):
         tmx_data = load_pygame('game/map/brighton_seafront.tmx')
-
-        # Create the pyscroll data source
         map_data = pyscroll.data.TiledMapData(tmx_data)
-
-        # Create the pyscroll map
         self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
-        self.map_layer.zoom = 2 #changed this line
-
-        # Create the pyscroll group
+        self.map_layer.zoom = 2
         self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
         self.blocks = pygame.sprite.Group()
 
         for layer in tmx_data.layers:
-            if hasattr(layer,'data'):
-                for x,y,surf in layer.tiles():
+            if hasattr(layer, 'data'):
+                for x, y, surf in layer.tiles():
                     pos = (x * 32, y * 32)
-                    tile = Tile(pos = pos, surf = surf, groups = self.group)
+                    tile = Tile(pos=pos, surf=surf, groups=self.group)
                     if layer.name == 'Buildings':
                         self.blocks.add(tile)
-
 
         for obj in tmx_data.objects:
             if obj.name == 'Player':
                 player_start_x = obj.x // TILESIZE
                 player_start_y = obj.y // TILESIZE
                 self.player = Player(self, player_start_x, player_start_y)
+                self.group.add(self.player)
+                self.all_sprites.add(self.player) #added this line
             elif obj.type == 'NPC':
                 npc_start_x = obj.x // TILESIZE
                 npc_start_y = obj.y // TILESIZE
-                # Changed this line:
-                npc_name = obj.properties.get("npc_name") # Changed this line
+                npc_name = obj.properties.get("npc_name")
                 npc_dialogue_key = obj.properties.get("dialogue_key")
-                npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE) #changed this line
+                npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
                 if npc_name is None:
-                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!") # Changed this line
-                    continue  # Skip this NPC and move to the next one
+                    print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
+                    continue
                 if npc_dialogue_key is None:
                     print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
-                    continue  # Skip this NPC
+                    continue
                 NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
                 self.group.add(self.npcs)
-        return self.player
 
     def new(self):
         self.playing = True
         self.createTilemap()
-        if self.player is not None:
-            self.group.add(self.player)
-        #self.all_sprites.add(self.group)
 
     def events(self):
         for event in pygame.event.get():
@@ -125,7 +114,7 @@ class Game:
             self.update()
             self.draw()
         self.running = False
-    
+
     def game_over(self):
         pass
 
@@ -149,8 +138,8 @@ class Game:
             if play_button.is_pressed(mouse_pos, mouse_pressed):
                 intro = False
 
-            self.screen.blit(self.intro_background, (0,0))
-            self.screen.blit (title, title_rect)
+            self.screen.blit(self.intro_background, (0, 0))
+            self.screen.blit(title, title_rect)
             self.screen.blit(play_button.image, play_button.rect)
             self.clock.tick(FPS)
             pygame.display.update()
@@ -163,7 +152,7 @@ class Game:
         else:
             if self.dialogue_box.active:
                 self.dialogue_box.toggle()
-    
+
     def draw_money(self):
         money_text = self.font.render(f"Money: {self.money}", True, WHITE)
         self.screen.blit(money_text, (10, 10))
@@ -186,7 +175,7 @@ class Quest:
     def __init__(self, quest_id, name):
         self.quest_id = quest_id
         self.name = name
-        self.stages = {}  # Dictionary of stages (stage_number: {"description": "", "complete": False, "success": False, "failure": False, "trigger": None})
+        self.stages = {}
         self.current_stage = 0
 
     def add_stage(self, stage_number, description, trigger=None):
@@ -220,4 +209,3 @@ while g.running:
 
 pygame.quit()
 sys.exit()
-
