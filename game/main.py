@@ -88,6 +88,18 @@ class Game:
         text_surface = cutscene_font.render(cutscene_text, True, WHITE)
         text_rect = text_surface.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
 
+        # Load cutscene images
+        self.cutscene_images = [
+            pygame.image.load('game/img/cutscene_image_1.png'), #replace with your own images
+            pygame.image.load('game/img/cutscene_image_2.png'), #replace with your own images
+            #pygame.image.load('game/img/cutscene_image_3.jpg') #replace with your own images
+        ]
+        self.current_image_index = 0
+
+        # Load sound
+        self.thunder_sound = pygame.mixer.Sound('game/sound/loudthunder.mp3') #replace with your own sound
+        self.thunder_sound.play()
+
         running_cutscene = True
         while running_cutscene:
             for event in pygame.event.get():
@@ -96,12 +108,32 @@ class Game:
                     running_cutscene = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        running_cutscene = False
+                        self.current_image_index += 1
+                        if self.current_image_index >= len(self.cutscene_images):
+                            running_cutscene = False
 
             self.screen.fill(BLACK)
+            # Display image
+            if self.current_image_index < len(self.cutscene_images):
+                image = self.cutscene_images[self.current_image_index]
+                image_rect = image.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
+                self.screen.blit(image, image_rect)            
             self.screen.blit(text_surface, text_rect)
             pygame.display.update()
         self.has_played_cutscene = True
+
+        # Wait for Enter key release
+        waiting_for_release = True
+        while waiting_for_release:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    waiting_for_release = False
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RETURN:
+                        waiting_for_release = False
+
+
 
     def create_quests(self):
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
