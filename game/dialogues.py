@@ -59,11 +59,25 @@ class Dialogue:
         self.current_line = 0
 
 class Cutscene:
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, sentences, images):
+        self.sentences = sentences
+        self.images = images
 
 cutscenes = {
-    "intro": Cutscene("This is placeholder text for me to replace")
+    "intro": Cutscene(
+        sentences=[
+            "It is the morning of October 16th in the year of our Lord 1833. A most terrible and violent storm the night prior has left the mighty Chain Pier in a ruinous state.",
+            "The second bridge is hanging down almost touching the sea.",
+            "Only the ropes of the third bridge remain.",
+            "Work to repair it must be commenced as soon as possible, for without the Pier there would be no way to dock ships!"
+        ],
+        images=[
+            'game/img/cutscene_image_1.png',  # Image _1
+            'game/img/cutscene_image_2.png',  # Image _2
+            'game/img/cutscene_image_3.png',  # Image _3
+            None  # Black screen
+        ]
+    )
 }
 
 

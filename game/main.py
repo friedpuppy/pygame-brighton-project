@@ -25,14 +25,14 @@ class Game:
         self.player = None
         self.npcs = pygame.sprite.Group()
         self.dialogues = dialogues
-        self.cutscenes = cutscenes  # Added this line
+        self.cutscenes = cutscenes  
         self.dialogue_box = DialogueBox(self, "", 50, 550)
         self.money = 0
         self.quest_log = {}
         self.create_quests()
         self.collision_objects = pygame.sprite.Group()
         self.blocks = pygame.sprite.Group()
-        self.has_played_cutscene = False  # Added this line
+        self.has_played_cutscene = False  
 
         # Story Mode Variables
         self.in_story_mode = False
@@ -83,21 +83,22 @@ class Game:
 
     def play_cutscene(self):
         print("Playing cutscene")
-        cutscene_text = self.cutscenes["intro"].text
+        cutscene_sentences = self.cutscenes["intro"].sentences
+        cutscene_images = self.cutscenes["intro"].images
         cutscene_font = pygame.font.Font('monofonto rg.otf', 24)
-        text_surface = cutscene_font.render(cutscene_text, True, WHITE)
-        text_rect = text_surface.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
 
-        # Load cutscene images
-        self.cutscene_images = [
-            pygame.image.load('game/img/cutscene_image_1.png'), #replace with your own images
-            pygame.image.load('game/img/cutscene_image_2.png'), #replace with your own images
-            #pygame.image.load('game/img/cutscene_image_3.jpg') #replace with your own images
-        ]
+       # Load cutscene images
+        self.cutscene_images = []
+        for image_path in cutscene_images:
+            if image_path:
+                self.cutscene_images.append(pygame.image.load(image_path))
+            else:
+                self.cutscene_images.append(None)
         self.current_image_index = 0
+        self.current_sentence_index = 0
 
         # Load sound
-        self.thunder_sound = pygame.mixer.Sound('game/sound/loudthunder.mp3') #replace with your own sound
+        self.thunder_sound = pygame.mixer.Sound('game/sound/loudthunder.mp3')
         self.thunder_sound.play()
 
         running_cutscene = True
@@ -109,6 +110,7 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.current_image_index += 1
+                        self.current_sentence_index += 1 #added this line
                         if self.current_image_index >= len(self.cutscene_images):
                             running_cutscene = False
 
@@ -116,9 +118,19 @@ class Game:
             # Display image
             if self.current_image_index < len(self.cutscene_images):
                 image = self.cutscene_images[self.current_image_index]
-                image_rect = image.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
-                self.screen.blit(image, image_rect)            
-            self.screen.blit(text_surface, text_rect)
+                if image:
+                    image_width = image.get_width()
+                    image_height = image.get_height()
+                    image_scale = min(WIN_WIDTH / image_width, (WIN_HEIGHT * 0.7) / image_height)
+                    scaled_image = pygame.transform.scale(image, (int(image_width * image_scale), int(image_height * image_scale)))
+                    image_rect = scaled_image.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2 * 0.8))
+                    self.screen.blit(scaled_image, image_rect)
+                else:
+                    pass
+            # Display text
+            if self.current_sentence_index < len(cutscene_sentences):
+                text_rect = pygame.Rect(50, WIN_HEIGHT - 150, WIN_WIDTH - 100, 100)
+                render_textrect(cutscene_sentences[self.current_sentence_index], cutscene_font, text_rect, WHITE, BLACK, 0)
             pygame.display.update()
         self.has_played_cutscene = True
 
@@ -132,7 +144,6 @@ class Game:
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RETURN:
                         waiting_for_release = False
-
 
 
     def create_quests(self):
@@ -355,6 +366,85 @@ class Quest:
         if self.current_stage in self.stages:
             return self.stages[self.current_stage]["description"]
         return "No current stage."
+
+class TextRectException:
+    def __init__(self, message = None):
+        self.message = message
+    def __str__(self):
+        return self.message
+
+def render_textrect(string, font, rect, text_color, background_color, justification=0):
+    """
+    Returns a surface containing the passed text string, reformatted
+    to fit within the given rect, word-wrapped as necessary. The text
+    will be anti-aliased.
+
+    Takes the following arguments:
+
+    string - the text you wish to render. \n begins a new line.
+    font - a Font object
+    rect - a rect object that the text will be drawn into.
+    text_color - a color tuple (ex (255, 0, 0) for red)
+    background_color - a color tuple (ex (0, 0, 0) for black)
+    justification - 0 (default) left-justified
+                    1 centered
+                    2 right-justified
+
+    Returns
+        Surface object with the text drawn onto it.
+    """
+
+    final_lines = []
+
+    requested_lines = string.splitlines()
+
+    # Create a series of lines that will fit on the provided
+    # rectangle.
+
+    for requested_line in requested_lines:
+        if font.size(requested_line)[0] > rect.width:
+            words = requested_line.split(' ')
+            # if any of our words are too long to fit, return.
+            for word in words:
+                if font.size(word)[0] >= rect.width:
+                    raise TextRectException(
+                        "The word " + word + " is too long to fit in the rect passed.")
+            # Start a new line
+            accumulated_line = ""
+            for word in words:
+                test_line = accumulated_line + word + " "
+                # Build the line while the words fit.
+                if font.size(test_line)[0] < rect.width:
+                    accumulated_line = test_line
+                else:
+                    final_lines.append(accumulated_line)
+                    accumulated_line = word + " "
+            final_lines.append(accumulated_line)
+        else:
+            final_lines.append(requested_line)
+
+    # Let's try to write the text out on the surface.
+
+    surface = pygame.Surface(rect.size)
+    surface.fill(background_color)
+
+    accumulated_height = 0
+    for line in final_lines:
+        if accumulated_height + font.size(line)[1] >= rect.height:
+            raise TextRectException("Once word-wrapped, the text string was too tall to fit in the rect.")
+        if line != "":
+            tempsurface = font.render(line, 1, text_color)
+            if justification == 0:
+                surface.blit(tempsurface, (0, accumulated_height))
+            elif justification == 1:
+                surface.blit(tempsurface, ((rect.width - tempsurface.get_width()) / 2, accumulated_height))
+            elif justification == 2:
+                surface.blit(tempsurface, (rect.width - tempsurface.get_width(), accumulated_height))
+            else:
+                raise TextRectException("Invalid justification argument: " + str(justification))
+        accumulated_height += font.size(line)[1]
+
+    return surface
 
 g = Game()
 g.intro_screen()
