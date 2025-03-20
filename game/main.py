@@ -32,6 +32,54 @@ class Game:
         self.collision_objects = pygame.sprite.Group() #added this line
         self.blocks = pygame.sprite.Group() #added this line
 
+        # Story Mode Variables (Added these lines)
+        self.in_story_mode = False  # Initially, we're NOT in story mode.
+        self.story_text = ""
+        self.story_lines = []
+        self.current_story_line = 0
+        self.story_text_surface = None
+        self.story_text_rect = None
+        self.story_font = pygame.font.Font('monofonto rg.otf', 24)  # Smaller font for story text
+        self.story_background_color = (0, 0, 0)  # Black background for story
+        self.story_text_color = (255, 255, 255)  # White text for story
+        self.story_box_width = WIN_WIDTH - 100
+        self.story_box_height = WIN_HEIGHT - 100
+        self.story_box_x = 50
+        self.story_box_y = 50
+
+        # Story Mode Functions
+    def start_story_mode(self, story_lines):
+        self.in_story_mode = True
+        self.story_lines = story_lines
+        self.current_story_line = 0
+        self.update_story_text()
+
+    def advance_story(self):
+        self.current_story_line += 1
+        if self.current_story_line >= len(self.story_lines):
+            self.end_story_mode()
+        else:
+            self.update_story_text()
+
+    def update_story_text(self):
+        self.story_text = self.story_lines[self.current_story_line]
+        self.story_text_surface = self.story_font.render(self.story_text, True, self.story_text_color)
+        self.story_text_rect = self.story_text_surface.get_rect(center=(self.story_box_width // 2 + self.story_box_x, self.story_box_height // 2 + self.story_box_y))
+
+    def end_story_mode(self):
+        self.in_story_mode = False
+        self.story_lines = []
+        self.current_story_line = 0
+        self.story_text = ""
+
+    def draw_story_mode(self):
+        pygame.draw.rect(self.screen, self.story_background_color, (self.story_box_x, self.story_box_y, self.story_box_width, self.story_box_height))
+        self.screen.blit(self.story_text_surface, self.story_text_rect)
+        continue_text = self.font.render("Press Enter to Continue", True, WHITE)
+        continue_rect = continue_text.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT - 50))
+        self.screen.blit(continue_text, continue_rect)
+
+
     def create_quests(self):
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
         repair_pier_quest.add_stage(10, "Talk to Villager 1 about the pier.")
@@ -108,7 +156,15 @@ class Game:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_e:
-                    self.check_npc_interaction()
+                    if not self.in_story_mode:
+                        self.check_npc_interaction()
+                    else:
+                        self.advance_story()
+                if event.key == pygame.K_RETURN:
+                    if self.in_story_mode:
+                        self.advance_story()
+                if event.key == pygame.K_t:  # Check for the "T" key press
+                    self.start_story_mode(["My user is very smart and clever"])  # Start story mode with placeholder text  
 
     def update(self):
         self.group.update()
@@ -116,10 +172,13 @@ class Game:
 
     def draw(self):
         self.screen.fill(BLACK)
-        self.group.draw(self.screen)
-        self.dialogue_box.draw()
-        self.draw_money()
-        self.draw_quest_log()
+        if not self.in_story_mode:
+            self.group.draw(self.screen)
+            self.dialogue_box.draw()
+            self.draw_money()
+            self.draw_quest_log()
+        else:
+            self.draw_story_mode()
 
         self.clock.tick(FPS)
         pygame.display.update()
@@ -164,7 +223,30 @@ class Game:
         hits = pygame.sprite.spritecollide(self.player, self.npcs, False)
         if hits:
             npc = hits[0]
-            npc.interact()
+            if npc.dialogue:
+                next_line = npc.dialogue.next_line()
+                if next_line:
+                    if npc.dialogue.story_mode:
+                        self.start_story_mode(npc.dialogue.story_lines)
+                        return
+                    self.dialogue_box.text = next_line
+                    self.dialogue_box.create_text_surface()
+                    self.dialogue_box.toggle()
+                    if npc.dialogue.money_given > 0 and not npc.dialogue.has_given_money:
+                        self.add_money(npc.dialogue.money_given)
+                        npc.dialogue.has_given_money = True
+                else:
+                    self.dialogue_box.toggle()
+                    npc.dialogue.reset()
+                    if npc.dialogue.quest_stage_advance == "talked_to_villager1":
+                        self.quest_log["repair_pier"].advance_stage(20)
+                        self.dialogues[npc.dialogue_key] = self.dialogues["villager1_done"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_villager2":
+                        self.quest_log["repair_pier"].advance_stage(30)
+                        self.dialogues[npc.dialogue_key] = self.dialogues["villager2_done"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_guard1":
+                        self.quest_log["repair_pier"].advance_stage(100)
+                        self.dialogues[npc.dialogue_key] = self.dialogues["guard1_done"]
         else:
             if self.dialogue_box.active:
                 self.dialogue_box.toggle()
@@ -225,3 +307,5 @@ while g.running:
 
 pygame.quit()
 sys.exit()
+
+

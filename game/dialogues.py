@@ -1,6 +1,8 @@
 # dialogues.py
 import pygame
 
+
+
 class DialogueBox:
     # ... (DialogueBox class remains the same) ...
     def __init__(self, game, text, x, y, width=600, height=200, font_size=30): #changed this line
@@ -36,13 +38,15 @@ class DialogueBox:
 
 class Dialogue:
     # ... (Dialogue class remains the same) ...
-    def __init__(self, name, lines, quest_stage_advance=None, money_given=0):
+    def __init__(self, name, lines, quest_stage_advance=None, money_given=0, story_mode=False, story_lines=None):
         self.name = name
         self.lines = lines
         self.current_line = 0
         self.quest_stage_advance = quest_stage_advance  # What quest stage to advance to
         self.money_given = money_given
         self.has_given_money = False
+        self.story_mode = story_mode
+        self.story_lines = story_lines if story_mode else []
 
     def next_line(self):
         self.current_line += 1
@@ -54,6 +58,15 @@ class Dialogue:
     def reset(self):
         self.current_line = 0
 
+class Cutscene:
+    def __init__(self, text):
+        self.text = text
+
+cutscenes = {
+    "intro": Cutscene("This is placeholder text for me to replace")
+}
+
+
 # Example dialogues with quest stage advancement and money
 dialogues = {
     "villager1": Dialogue("Villager 1", ["Oh no, the pier is broken!", "I can give you 5 gold to help fix it.", "Good luck!"], quest_stage_advance="talked_to_villager1", money_given=5),
@@ -62,4 +75,5 @@ dialogues = {
     "villager1_done": Dialogue("Villager 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
     "villager2_done": Dialogue("Villager 2", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
     "guard1_done": Dialogue("Guard 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
+    "story_teller": Dialogue("Story Teller", ["This is the start of a story!"], story_mode=True, story_lines=["This is the first line of the story.", "This is the second line.", "This is the third line."])
 }
