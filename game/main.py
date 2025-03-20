@@ -25,29 +25,31 @@ class Game:
         self.player = None
         self.npcs = pygame.sprite.Group()
         self.dialogues = dialogues
+        self.cutscenes = cutscenes  # Added this line
         self.dialogue_box = DialogueBox(self, "", 50, 550)
         self.money = 0
         self.quest_log = {}
         self.create_quests()
-        self.collision_objects = pygame.sprite.Group() #added this line
-        self.blocks = pygame.sprite.Group() #added this line
+        self.collision_objects = pygame.sprite.Group()
+        self.blocks = pygame.sprite.Group()
+        self.has_played_cutscene = False  # Added this line
 
-        # Story Mode Variables (Added these lines)
-        self.in_story_mode = False  # Initially, we're NOT in story mode.
+        # Story Mode Variables
+        self.in_story_mode = False
         self.story_text = ""
         self.story_lines = []
         self.current_story_line = 0
         self.story_text_surface = None
         self.story_text_rect = None
-        self.story_font = pygame.font.Font('monofonto rg.otf', 24)  # Smaller font for story text
-        self.story_background_color = (0, 0, 0)  # Black background for story
-        self.story_text_color = (255, 255, 255)  # White text for story
+        self.story_font = pygame.font.Font('monofonto rg.otf', 24)
+        self.story_background_color = (0, 0, 0)
+        self.story_text_color = (255, 255, 255)
         self.story_box_width = WIN_WIDTH - 100
         self.story_box_height = WIN_HEIGHT - 100
         self.story_box_x = 50
         self.story_box_y = 50
 
-        # Story Mode Functions
+    # Story Mode Functions
     def start_story_mode(self, story_lines):
         self.in_story_mode = True
         self.story_lines = story_lines
@@ -79,6 +81,27 @@ class Game:
         continue_rect = continue_text.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT - 50))
         self.screen.blit(continue_text, continue_rect)
 
+    def play_cutscene(self):
+        print("Playing cutscene")
+        cutscene_text = self.cutscenes["intro"].text
+        cutscene_font = pygame.font.Font('monofonto rg.otf', 24)
+        text_surface = cutscene_font.render(cutscene_text, True, WHITE)
+        text_rect = text_surface.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2))
+
+        running_cutscene = True
+        while running_cutscene:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    running_cutscene = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        running_cutscene = False
+
+            self.screen.fill(BLACK)
+            self.screen.blit(text_surface, text_rect)
+            pygame.display.update()
+        self.has_played_cutscene = True
 
     def create_quests(self):
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
@@ -212,6 +235,9 @@ class Game:
 
             if play_button.is_pressed(mouse_pos, mouse_pressed):
                 intro = False
+                if not self.has_played_cutscene:
+                    self.play_cutscene()
+                self.new()
 
             self.screen.blit(self.intro_background, (0, 0))
             self.screen.blit(title, title_rect)
