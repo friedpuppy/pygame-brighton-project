@@ -11,14 +11,18 @@ import random
 class Game:
     def __init__(self):
         pygame.init()
+        print("Game.__init__() called") #added this line
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font('monofonto rg.otf', 32)
         self.running = True
+        self.game_started = False #added this line
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
         self.enemy_spritesheet = Spritesheet('game/img/enemy.png')
+        
+        self.npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
 
         self.intro_background = pygame.image.load('game/img/BPC00100.jpg')
 
@@ -110,11 +114,17 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.current_image_index += 1
-                        self.current_sentence_index += 1 #added this line
+                        self.current_sentence_index += 1
                         if self.current_image_index >= len(self.cutscene_images):
                             running_cutscene = False
 
             self.screen.fill(BLACK)
+            # Display text
+            if self.current_sentence_index < len(cutscene_sentences):
+                text_rect = pygame.Rect(50, WIN_HEIGHT - 150, WIN_WIDTH - 100, 100)
+                justification = 1  # Center for all sentences
+                text_surface = render_textrect(cutscene_sentences[self.current_sentence_index], cutscene_font, text_rect, WHITE, BLACK, justification)
+                self.screen.blit(text_surface, text_rect)
             # Display image
             if self.current_image_index < len(self.cutscene_images):
                 image = self.cutscene_images[self.current_image_index]
@@ -127,10 +137,6 @@ class Game:
                     self.screen.blit(scaled_image, image_rect)
                 else:
                     pass
-            # Display text
-            if self.current_sentence_index < len(cutscene_sentences):
-                text_rect = pygame.Rect(50, WIN_HEIGHT - 150, WIN_WIDTH - 100, 100)
-                render_textrect(cutscene_sentences[self.current_sentence_index], cutscene_font, text_rect, WHITE, BLACK, 0)
             pygame.display.update()
         self.has_played_cutscene = True
 
@@ -158,30 +164,49 @@ class Game:
         print("The pier has been repaired!")
 
     def createTilemap(self):
+        print("createTilemap() called")
         try:
             tmx_data = load_pygame('game/map/brighton_seafront.tmx')
+            print("Map loaded successfully")
             map_data = pyscroll.data.TiledMapData(tmx_data)
             self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
             self.map_layer.zoom = 2
-            self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=GROUND_LAYER)
+            self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer) #changed this line
             self.group.map_rect = self.map_layer.map_rect
 
             for layer in tmx_data.layers:
                 if hasattr(layer, 'data'):
                     for x, y, surf in layer.tiles():
                         pos = (x * 32, y * 32)
+                        print(f"Tile pos: {pos}, Layer: {layer.name}") #added this line
                         if layer.name == 'Buildings':
                             tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
+                            self.group.add(tile, layer=BUILDING_LAYER) #added this line
+                        elif layer.name == 'Door':
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
+                            self.group.add(tile, layer=DOOR_LAYER) #added this line
+                        elif layer.name == 'AbovePlayer':
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            self.group.add(tile, layer=ABOVE_PLAYER_LAYER) #added this line
+                        elif layer.name == 'Pier Chains':
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            self.group.add(tile, layer=PIER_CHAINS_LAYER) #added this line
+                        elif layer.name == 'Pier':
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            self.group.add(tile, layer=GROUND_LAYER) #added this line
+                        elif layer.name == 'Street':
+                            tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            self.group.add(tile, layer=GROUND_LAYER) #added this line
                         else:
                             tile = Tile(pos=pos, surf=surf, groups=[self.group])
-                        self.group.add(tile, layer=tile.layer)
+                            self.group.add(tile, layer=GROUND_LAYER) #added this line
 
             for obj in tmx_data.objects:
+                print(f"Found object: {obj.name}, Type: {obj.type}")
                 if obj.name == 'Player':
                     player_start_x = obj.x // TILESIZE
                     player_start_y = obj.y // TILESIZE
                     self.player = Player(self, player_start_x, player_start_y)
-                    self.group.add(self.player, layer=PLAYER_LAYER)
                 elif obj.type == 'NPC':
                     self.create_npc(obj)
             
@@ -192,19 +217,20 @@ class Game:
             print(f"Error creating tilemap: {e}")
 
     def create_npc(self, obj):
+        print(f"create_npc() called for: {obj.name}")
         try:
             npc_start_x = obj.x // TILESIZE
             npc_start_y = obj.y // TILESIZE
             npc_name = obj.properties.get("npc_name")
             npc_dialogue_key = obj.properties.get("dialogue_key")
-            npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
+            #npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE) #removed this line
             if npc_name is None:
                 print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
                 return
             if npc_dialogue_key is None:
                 print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
                 return
-            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
+            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, self.npc_sprite) #changed this line
             self.group.add(npc, layer=NPC_LAYER)
             self.collision_objects.add(npc)
             self.npcs.add(npc)
@@ -234,12 +260,14 @@ class Game:
 
     def update(self):
         self.group.update()
-        self.group.center(self.player.rect.center)
+        self.group.center(self.player.rect.center) #changed this line
 
     def draw(self):
+        print("Game.draw() called")
+        print(f"Player rect: {self.player.rect}") #added this line
         self.screen.fill(BLACK)
         if not self.in_story_mode:
-            self.group.draw(self.screen)
+            self.group.draw(self.screen) #changed this line
             self.dialogue_box.draw()
             self.draw_money()
             self.draw_quest_log()
@@ -276,8 +304,9 @@ class Game:
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
 
-            if play_button.is_pressed(mouse_pos, mouse_pressed):
+            if play_button.is_pressed(mouse_pos, mouse_pressed) and not self.game_started: #changed this line
                 intro = False
+                self.game_started = True #added this line
                 if not self.has_played_cutscene:
                     self.play_cutscene()
                 self.new()
@@ -289,8 +318,10 @@ class Game:
             pygame.display.update()
 
     def check_npc_interaction(self):
+        print(f"Checking for NPC interaction. {len(self.npcs)} npcs in group")  # Debugging: Check how many sprites are in the npcs group
         hits = pygame.sprite.spritecollide(self.player, self.npcs, False)
         if hits:
+            print(f"Player collided with {len(hits)} npcs")  # Debugging: Check how many npcs the player collided with
             npc = hits[0]
             if npc.dialogue:
                 next_line = npc.dialogue.next_line()
@@ -307,15 +338,15 @@ class Game:
                 else:
                     self.dialogue_box.toggle()
                     npc.dialogue.reset()
-                    if npc.dialogue.quest_stage_advance == "talked_to_villager1":
+                    if npc.dialogue.quest_stage_advance == "talked_to_donor1":
                         self.quest_log["repair_pier"].advance_stage(20)
-                        self.dialogues[npc.dialogue_key] = self.dialogues["villager1_done"]
-                    elif npc.dialogue.quest_stage_advance == "talked_to_villager2":
+                        self.dialogues[npc.dialogue_key] = self.dialogues["donor1_done"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_donor2":
                         self.quest_log["repair_pier"].advance_stage(30)
-                        self.dialogues[npc.dialogue_key] = self.dialogues["villager2_done"]
-                    elif npc.dialogue.quest_stage_advance == "talked_to_guard1":
+                        self.dialogues[npc.dialogue_key] = self.dialogues["donor2_done"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_donor3":
                         self.quest_log["repair_pier"].advance_stage(100)
-                        self.dialogues[npc.dialogue_key] = self.dialogues["guard1_done"]
+                        self.dialogues[npc.dialogue_key] = self.dialogues["donor3_done"]
         else:
             if self.dialogue_box.active:
                 self.dialogue_box.toggle()
@@ -448,7 +479,7 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
 
 g = Game()
 g.intro_screen()
-g.new()
+#g.new()
 while g.running:
     g.main()
     g.game_over()

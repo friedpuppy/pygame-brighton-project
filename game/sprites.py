@@ -14,29 +14,30 @@ class Spritesheet:
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):  # the game is passed in as an object
+    def __init__(self, game, x, y):
         self.game = game
-        pygame.sprite.Sprite.__init__(self)
+        self.groups = self.game.group
+        pygame.sprite.Sprite.__init__(self, self.groups)  # Call pygame.sprite.Sprite.__init__()
+        self.collide_objects = None
 
         self.x = x * TILESIZE
         self.y = y * TILESIZE
         self.width = TILESIZE
         self.height = TILESIZE
 
-        self.x_change = 0  # temporary variables that store the change in movement during one loop
+        self.x_change = 0
         self.y_change = 0
 
-        self.facing = 'down'  # is character facing up left or down etc
+        self.facing = 'down'
 
-        self.image = self.game.character_spritesheet.get_sprite(3, 2, self.width, self.height)  # x, y, width, height
-
-                                                                
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x  # tells pygame the coordinates of our rectangle
-        self.rect.y = self.y
-
+        self.image = self.game.character_spritesheet.get_sprite(0, 0, self.width, self.height)
+        self.rect = self.image.get_rect()  # Get the rect from the image
+        self.rect.x = self.x  # Set the x position
+        self.rect.y = self.y  # Set the y position
+        self.game.group.add(self, layer=PLAYER_LAYER) #added this line
 
     def update(self):
+        print("Player.update() called")
         self.movement()
 
         self.rect.x += self.x_change
@@ -46,12 +47,14 @@ class Player(pygame.sprite.Sprite):
         self.x_change = 0
         self.y_change = 0
 
-
+        print(f"Player rect: {self.rect}")
+        print(f"Player x_change: {self.x_change}")
+        print(f"Player y_change: {self.y_change}")
 
     def movement(self):
-        keys = pygame.key.get_pressed()  # list of every key pressed on keyboard stored in 'keys'
+        keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
-            self.x_change -= PLAYER_SPEED  # referenced in config.py
+            self.x_change -= PLAYER_SPEED
             self.facing = 'left'
         if keys[pygame.K_d]:
             self.x_change += PLAYER_SPEED
@@ -62,24 +65,36 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_s]:
             self.y_change += PLAYER_SPEED
             self.facing = 'down'
-
-    def collide_blocks(self, direction):  # collision function
+        
+    def collide_blocks(self, direction):
+        print(f"collide_blocks() called for direction: {direction}")
         if direction == "x":
             hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
-            if hits:
-                if self.x_change > 0: #moving right
-                    self.rect.x = hits[0].rect.left - self.rect.width #move to the left of the block
+            if hits: #added this line
+                if self.x_change > 0:
+                    self.rect.x = hits[0].rect.left - self.rect.width
+                if self.x_change < 0:
+                    self.rect.x = hits[0].rect.right
+            hits = pygame.sprite.spritecollide(self, self.collide_objects, False)
+            if hits: #added this line
+                if self.x_change > 0:
+                    self.rect.x = hits[0].rect.left - self.rect.width
                 if self.x_change < 0:
                     self.rect.x = hits[0].rect.right
 
         if direction == "y":
             hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
-            if hits:
+            if hits: #added this line
                 if self.y_change > 0:
                     self.rect.y = hits[0].rect.top - self.rect.height
-                if self.y_change < 0: #moving up
+                if self.y_change < 0:
                     self.rect.y = hits[0].rect.bottom
-
+            hits = pygame.sprite.spritecollide(self, self.collide_objects, False)
+            if hits: #added this line
+                if self.y_change > 0:
+                    self.rect.y = hits[0].rect.top - self.rect.height
+                if self.y_change < 0:
+                    self.rect.y = hits[0].rect.bottom
 class Button:
     def __init__(self, x, y, width, height, fg, bg, content, fontsize):
         self.font = pygame.font.Font('monofonto rg.otf', fontsize)
@@ -118,7 +133,8 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft = pos)
 
 class NPC(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, name, dialogue_key, sprite): #added sprite
+    def __init__(self, game, x, y, name, dialogue_key, sprite): #changed this line
+        print(f"NPC __init__ called for: {name}")  # Debugging: Check if NPC is initialized
         self.game = game
         self.groups = self.game.npcs
         pygame.sprite.Sprite.__init__(self, self.groups)
@@ -132,19 +148,17 @@ class NPC(pygame.sprite.Sprite):
         self.dialogue_key = dialogue_key
         self.dialogue = self.game.dialogues.get(self.dialogue_key)
 
-        if sprite is None: #added this line
-            self.image = pygame.Surface((self.width, self.height)) #added this line
-            self.image.fill((255, 0, 0)) #added this line
-        else: #added this line
-            self.image = sprite #changed this line
+        self.image = sprite #changed this line
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
+        self.game.group.add(self, layer=NPC_LAYER) #added this line
 
     def update(self):
         pass
 
     def interact(self):
+        print(f"NPC interact() called for: {self.name}")  # Debugging: Check if NPC interact is called
         if self.dialogue:
             next_line = self.dialogue.next_line()
             if next_line:
@@ -157,12 +171,12 @@ class NPC(pygame.sprite.Sprite):
             else:
                 self.game.dialogue_box.toggle()
                 self.dialogue.reset()
-                if self.dialogue.quest_stage_advance == "talked_to_villager1":
+                if self.dialogue.quest_stage_advance == "talked_to_donor1":
                     self.game.quest_log["repair_pier"].advance_stage(20)
-                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["villager1_done"]
-                elif self.dialogue.quest_stage_advance == "talked_to_villager2":
+                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor1_done"]
+                elif self.dialogue.quest_stage_advance == "talked_to_donor2":
                     self.game.quest_log["repair_pier"].advance_stage(30)
-                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["villager2_done"]
-                elif self.dialogue.quest_stage_advance == "talked_to_guard1":
+                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor2_done"]
+                elif self.dialogue.quest_stage_advance == "talked_to_donor3":
                     self.game.quest_log["repair_pier"].advance_stage(100)
-                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["guard1_done"]
+                    self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor3_done"]
