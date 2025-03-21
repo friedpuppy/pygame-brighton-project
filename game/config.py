@@ -12,7 +12,11 @@ BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
-GROUND_LAYER = 1  # Ground tiles
-NPC_LAYER = 2     # NPCs
-PLAYER_LAYER = 3  # Player
-BUILDING_LAYER = 4 # Buildings (drawn on top)
+# Layer Constants
+GROUND_LAYER = 1       # Street, Pier
+NPC_LAYER = 2          # NPCs
+PLAYER_LAYER = 3       # Player
+BUILDING_LAYER = 4     # Buildings
+DOOR_LAYER = 5         # Doors
+ABOVE_PLAYER_LAYER = 6 # AbovePlayer
+PIER_CHAINS_LAYER = 7  # Pier Chains

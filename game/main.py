@@ -12,27 +12,30 @@ class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+        pygame.display.set_caption("A Pier to the Past")  # Set window title
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font('monofonto rg.otf', 32)
         self.running = True
+        self.game_started = False
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
         self.enemy_spritesheet = Spritesheet('game/img/enemy.png')
+        self.npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
 
         self.intro_background = pygame.image.load('game/img/BPC00100.jpg')
 
         self.player = None
         self.npcs = pygame.sprite.Group()
         self.dialogues = dialogues
-        self.cutscenes = cutscenes  
+        self.cutscenes = cutscenes
         self.dialogue_box = DialogueBox(self, "", 50, 550)
         self.money = 0
         self.quest_log = {}
         self.create_quests()
         self.collision_objects = pygame.sprite.Group()
         self.blocks = pygame.sprite.Group()
-        self.has_played_cutscene = False  
+        self.has_played_cutscene = False
 
         # Story Mode Variables
         self.in_story_mode = False
@@ -82,22 +85,14 @@ class Game:
         self.screen.blit(continue_text, continue_rect)
 
     def play_cutscene(self):
-        print("Playing cutscene")
         cutscene_sentences = self.cutscenes["intro"].sentences
         cutscene_images = self.cutscenes["intro"].images
         cutscene_font = pygame.font.Font('monofonto rg.otf', 24)
 
-       # Load cutscene images
-        self.cutscene_images = []
-        for image_path in cutscene_images:
-            if image_path:
-                self.cutscene_images.append(pygame.image.load(image_path))
-            else:
-                self.cutscene_images.append(None)
+        self.cutscene_images = [pygame.image.load(image_path) if image_path else None for image_path in cutscene_images]
         self.current_image_index = 0
         self.current_sentence_index = 0
 
-        # Load sound
         self.thunder_sound = pygame.mixer.Sound('game/sound/loudthunder.mp3')
         self.thunder_sound.play()
 
@@ -110,31 +105,31 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.current_image_index += 1
-                        self.current_sentence_index += 1 #added this line
+                        self.current_sentence_index += 1
                         if self.current_image_index >= len(self.cutscene_images):
                             running_cutscene = False
 
             self.screen.fill(BLACK)
-            # Display image
+
+            if self.current_sentence_index < len(cutscene_sentences):
+                text_rect = pygame.Rect(50, WIN_HEIGHT - 150, WIN_WIDTH - 100, 100)
+                text_surface = render_textrect(cutscene_sentences[self.current_sentence_index], cutscene_font, text_rect, WHITE, BLACK, 1)
+                self.screen.blit(text_surface, text_rect)
+
             if self.current_image_index < len(self.cutscene_images):
                 image = self.cutscene_images[self.current_image_index]
                 if image:
-                    image_width = image.get_width()
-                    image_height = image.get_height()
+                    image_width, image_height = image.get_size()
                     image_scale = min(WIN_WIDTH / image_width, (WIN_HEIGHT * 0.7) / image_height)
                     scaled_image = pygame.transform.scale(image, (int(image_width * image_scale), int(image_height * image_scale)))
-                    image_rect = scaled_image.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT // 2 * 0.8))
+                    image_rect = scaled_image.get_rect(center=(WIN_WIDTH // 2, int(WIN_HEIGHT * 0.4)))
                     self.screen.blit(scaled_image, image_rect)
-                else:
-                    pass
-            # Display text
-            if self.current_sentence_index < len(cutscene_sentences):
-                text_rect = pygame.Rect(50, WIN_HEIGHT - 150, WIN_WIDTH - 100, 100)
-                render_textrect(cutscene_sentences[self.current_sentence_index], cutscene_font, text_rect, WHITE, BLACK, 0)
-            pygame.display.update()
+
+            pygame.display.flip()  # Use flip instead of update
+            self.clock.tick(FPS)
+
         self.has_played_cutscene = True
 
-        # Wait for Enter key release
         waiting_for_release = True
         while waiting_for_release:
             for event in pygame.event.get():
@@ -144,7 +139,6 @@ class Game:
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RETURN:
                         waiting_for_release = False
-
 
     def create_quests(self):
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
@@ -163,7 +157,7 @@ class Game:
             map_data = pyscroll.data.TiledMapData(tmx_data)
             self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
             self.map_layer.zoom = 2
-            self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=GROUND_LAYER)
+            self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
             self.group.map_rect = self.map_layer.map_rect
 
             for layer in tmx_data.layers:
@@ -171,21 +165,34 @@ class Game:
                     for x, y, surf in layer.tiles():
                         pos = (x * 32, y * 32)
                         if layer.name == 'Buildings':
-                            tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
-                        else:
-                            tile = Tile(pos=pos, surf=surf, groups=[self.group])
-                        self.group.add(tile, layer=tile.layer)
+                            #tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
+                            #self.group.add(tile, layer=BUILDING_LAYER)
+                            pass
+                        elif layer.name == 'Door':
+                            #tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
+                            #self.group.add(tile, layer=DOOR_LAYER)
+                            pass
+                        elif layer.name == 'AbovePlayer':
+                            #tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            #self.group.add(tile, layer=ABOVE_PLAYER_LAYER)
+                            pass
+                        elif layer.name == 'Pier Chains':
+                            #tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            #self.group.add(tile, layer=PIER_CHAINS_LAYER)
+                            pass
+                        elif layer.name in ['Pier', 'Street']:
+                            #tile = Tile(pos=pos, surf=surf, groups=[self.group])
+                            #self.group.add(tile, layer=GROUND_LAYER)
+                            pass
 
             for obj in tmx_data.objects:
                 if obj.name == 'Player':
                     player_start_x = obj.x // TILESIZE
                     player_start_y = obj.y // TILESIZE
                     self.player = Player(self, player_start_x, player_start_y)
-                    self.group.add(self.player, layer=PLAYER_LAYER)
                 elif obj.type == 'NPC':
                     self.create_npc(obj)
-            
-            # Move this line here, after the player is created
+
             if self.player:
                 self.player.collide_objects = self.collision_objects
         except Exception as e:
@@ -197,14 +204,13 @@ class Game:
             npc_start_y = obj.y // TILESIZE
             npc_name = obj.properties.get("npc_name")
             npc_dialogue_key = obj.properties.get("dialogue_key")
-            npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
             if npc_name is None:
                 print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
                 return
             if npc_dialogue_key is None:
                 print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
                 return
-            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
+            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, self.npc_sprite)
             self.group.add(npc, layer=NPC_LAYER)
             self.collision_objects.add(npc)
             self.npcs.add(npc)
@@ -222,15 +228,15 @@ class Game:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_e:
-                    if not self.in_story_mode:
+                    if not self.in_story_mode and not self.dialogue_box.active:
                         self.check_npc_interaction()
                     else:
                         self.advance_story()
                 if event.key == pygame.K_RETURN:
                     if self.in_story_mode:
                         self.advance_story()
-                if event.key == pygame.K_t:  # Check for the "T" key press
-                    self.start_story_mode(["My user is very smart and clever"])  # Start story mode with placeholder text  
+                if event.key == pygame.K_t:
+                    self.start_story_mode(["My user is very smart and clever"])
 
     def update(self):
         self.group.update()
@@ -246,8 +252,8 @@ class Game:
         else:
             self.draw_story_mode()
 
+        pygame.display.flip()  # Use flip instead of update
         self.clock.tick(FPS)
-        pygame.display.update()
 
     def main(self):
         while self.playing:
@@ -276,8 +282,9 @@ class Game:
             mouse_pos = pygame.mouse.get_pos()
             mouse_pressed = pygame.mouse.get_pressed()
 
-            if play_button.is_pressed(mouse_pos, mouse_pressed):
+            if play_button.is_pressed(mouse_pos, mouse_pressed) and not self.game_started:
                 intro = False
+                self.game_started = True
                 if not self.has_played_cutscene:
                     self.play_cutscene()
                 self.new()
@@ -285,8 +292,8 @@ class Game:
             self.screen.blit(self.intro_background, (0, 0))
             self.screen.blit(title, title_rect)
             self.screen.blit(play_button.image, play_button.rect)
+            pygame.display.flip()  # Use flip instead of update
             self.clock.tick(FPS)
-            pygame.display.update()
 
     def check_npc_interaction(self):
         hits = pygame.sprite.spritecollide(self.player, self.npcs, False)
@@ -307,15 +314,15 @@ class Game:
                 else:
                     self.dialogue_box.toggle()
                     npc.dialogue.reset()
-                    if npc.dialogue.quest_stage_advance == "talked_to_villager1":
+                    if npc.dialogue.quest_stage_advance == "talked_to_donor1":
                         self.quest_log["repair_pier"].advance_stage(20)
-                        self.dialogues[npc.dialogue_key] = self.dialogues["villager1_done"]
-                    elif npc.dialogue.quest_stage_advance == "talked_to_villager2":
+                        self.dialogues[npc.dialogue_key] = self.dialogues["donor1_done"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_donor2":
                         self.quest_log["repair_pier"].advance_stage(30)
-                        self.dialogues[npc.dialogue_key] = self.dialogues["villager2_done"]
-                    elif npc.dialogue.quest_stage_advance == "talked_to_guard1":
+                        self.dialogues[npc.dialogue_key] = self.dialogues["donor2_done"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_donor3":
                         self.quest_log["repair_pier"].advance_stage(100)
-                        self.dialogues[npc.dialogue_key] = self.dialogues["guard1_done"]
+                        self.dialogues[npc.dialogue_key] = self.dialogues["donor3_done"]
         else:
             if self.dialogue_box.active:
                 self.dialogue_box.toggle()
@@ -448,7 +455,7 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
 
 g = Game()
 g.intro_screen()
-g.new()
+#g.new()
 while g.running:
     g.main()
     g.game_over()

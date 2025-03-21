@@ -83,11 +83,19 @@ cutscenes = {
 
 # Example dialogues with quest stage advancement and money
 dialogues = {
-    "villager1": Dialogue("Villager 1", ["Oh no, the pier is broken!", "I can give you 5 gold to help fix it.", "Good luck!"], quest_stage_advance="talked_to_villager1", money_given=5),
-    "villager2": Dialogue("Villager 2", ["I heard about the pier.", "Here's 10 gold to help.", "I hope it gets fixed soon!"], quest_stage_advance="talked_to_villager2", money_given=10),
-    "guard1": Dialogue("Guard 1", ["The pier is in bad shape.", "I can spare 2 gold.", "Be careful out there!"], quest_stage_advance="talked_to_guard1", money_given=2),
-    "villager1_done": Dialogue("Villager 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
-    "villager2_done": Dialogue("Villager 2", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
-    "guard1_done": Dialogue("Guard 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
-    "story_teller": Dialogue("Story Teller", ["This is the start of a story!"], story_mode=True, story_lines=["This is the first line of the story.", "This is the second line.", "This is the third line."])
+    "donor1": Dialogue("Donor 1", ["Oh no, the pier is broken!", "I can give you 5 gold to help fix it.", "Good luck!"], quest_stage_advance="talked_to_donor1", money_given=5),
+    "donor2": Dialogue("Donor 2", ["I heard about the pier.", "Here's 10 gold to help.", "I hope it gets fixed soon!"], quest_stage_advance="talked_to_donor2", money_given=10),
+    "donor3": Dialogue("Donor 3", ["The pier is in bad shape.", "I can spare 2 gold.", "Be careful out there!"], quest_stage_advance="talked_to_donor3", money_given=2),
+    "donor1_done": Dialogue("Donor 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
+    "donor2_done": Dialogue("Donor 2", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
+    "donor3_done": Dialogue("Donor 3", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
+    "story_teller": Dialogue("Story Teller", ["This is the start of a story!"], story_mode=True, story_lines=["This is the first line of the story.", "This is the second line.", "This is the third line."]),
+    "pierkeeper": Dialogue("Pierkeeper", [
+        "Oh, the Chain Pier! What a terrible sight after last night's storm.",
+        "The second bridge is hanging precariously, and the third is gone entirely!",
+        "We need to gather funds to repair it. Can you help?",
+        "Speak to the donors, they may be able to spare some gold."
+    ], quest_stage_advance="talked_to_pierkeeper"),
+    "pierkeeper_done": Dialogue("Pierkeeper", ["Thank you for helping to repair the pier!", "I have no more to say."], money_given=0),
+    "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
 }
