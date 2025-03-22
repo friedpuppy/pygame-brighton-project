@@ -164,31 +164,33 @@ class Game:
             self.map_layer.zoom = 2
             self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
             self.group.map_rect = self.map_layer.map_rect
-            self.doors = pygame.sprite.Group() #added this line
+            self.doors = pygame.sprite.Group()
+            self.collision_objects = pygame.sprite.Group()
+            self.blocks = pygame.sprite.Group()
 
             for layer in tmx_data.layers:
                 if hasattr(layer, 'data'):
                     for x, y, surf in layer.tiles():
                         pos = (x * 32, y * 32)
                         if layer.name == 'Buildings':
-                            #tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
-                            #self.group.add(tile, layer=BUILDING_LAYER)
-                            pass
-                        elif layer.name == 'Door':
-                            #tile = Tile(pos=pos, surf=surf, groups=[self.group, self.blocks, self.collision_objects])
-                            #self.group.add(tile, layer=DOOR_LAYER)
-                            pass
+                            rect = pygame.Rect(pos, (TILESIZE, TILESIZE))
+                            block = pygame.sprite.Sprite()
+                            block.image = surf #changed this line
+                            block.rect = rect
+                            self.collision_objects.add(block)
+                            self.blocks.add(block)
+                            self.group.add(block, layer=BUILDING_LAYER)
+                        elif layer.name == 'Door': #added this line
+                            rect = pygame.Rect(pos, (TILESIZE, TILESIZE)) #added this line
+                            door_tile = pygame.sprite.Sprite() #added this line
+                            door_tile.image = surf #added this line
+                            door_tile.rect = rect #added this line
+                            self.group.add(door_tile, layer=DOOR_LAYER) #added this line
                         elif layer.name == 'AbovePlayer':
-                            #tile = Tile(pos=pos, surf=surf, groups=[self.group])
-                            #self.group.add(tile, layer=ABOVE_PLAYER_LAYER)
                             pass
                         elif layer.name == 'Pier Chains':
-                            #tile = Tile(pos=pos, surf=surf, groups=[self.group])
-                            #self.group.add(tile, layer=PIER_CHAINS_LAYER)
                             pass
                         elif layer.name in ['Pier', 'Street']:
-                            #tile = Tile(pos=pos, surf=surf, groups=[self.group])
-                            #self.group.add(tile, layer=GROUND_LAYER)
                             pass
 
             for obj in tmx_data.objects:
@@ -198,9 +200,10 @@ class Game:
                     self.player = Player(self, player_start_x, player_start_y)
                 elif obj.type == 'NPC':
                     self.create_npc(obj)
-                elif obj.type == "Door": #added this line
-                    door = Door(self, obj.properties["door_id"], obj.x, obj.y, obj.properties["npc_dialogue_key"], obj.properties["npc_name"]) #added this line
-                    self.doors.add(door) #added this line
+                elif obj.type == "Door":
+                    door = Door(self, obj.properties["door_id"], obj.x, obj.y, obj.properties["npc_dialogue_key"], obj.properties["npc_name"])
+                    self.doors.add(door)
+                    self.collision_objects.add(door)
 
             if self.player:
                 self.player.collide_objects = self.collision_objects
@@ -247,7 +250,10 @@ class Game:
                 if event.key == pygame.K_t:
                     self.start_story_mode(["My user is very smart and clever"])
                 if event.key == pygame.K_k:  # Check for 'K' key press
-                    self.player.say("Knock Knock")
+                    hits = pygame.sprite.spritecollide(self.player, self.doors, False) #added this line
+                    if hits: #added this line
+                        hits[0].knock_knock() #added this line
+
 
     def update(self):
         self.group.update()

@@ -14,6 +14,7 @@ class Door(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.knocked = False
+        self.collision_rect = pygame.Rect(self.rect.x - TILESIZE, self.rect.y, TILESIZE * 2, TILESIZE) #added this line
 
     def knock(self):
         if not self.knocked:
@@ -29,6 +30,12 @@ class Door(pygame.sprite.Sprite):
             self.game.collision_objects.add(npc)
             npc.walk_out()
             npc.interact()
+
+    def knock_knock(self): #added this line
+        print(f"knock_knock() called for door {self.door_id}") #added this line
+
+    def knock_knock(self): #added this line
+        print(f"knock_knock() called for door {self.door_id}") #added this line
 
 class SpeechBubble(pygame.sprite.Sprite):
     def __init__(self, game, text, x, y, duration=120):
@@ -66,7 +73,7 @@ class Spritesheet:
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.game = game
-        self.groups = self.game.group
+        self.groups = self.game.group #changed this line
         pygame.sprite.Sprite.__init__(self, self.groups)  # Call pygame.sprite.Sprite.__init__()
         self.collide_objects = None
 
@@ -119,12 +126,16 @@ class Player(pygame.sprite.Sprite):
                     self.rect.x = hits[0].rect.left - self.rect.width
                 if self.x_change < 0:
                     self.rect.x = hits[0].rect.right
-            hits = pygame.sprite.spritecollide(self, self.collide_objects, False)
+            hits = pygame.sprite.spritecollide(self, self.collide_objects, False) #added this line
             if hits: #added this line
-                if self.x_change > 0:
-                    self.rect.x = hits[0].rect.left - self.rect.width
-                if self.x_change < 0:
-                    self.rect.x = hits[0].rect.right
+                for hit in hits: #added this line
+                    if isinstance(hit, Door): #added this line
+                        pass #added this line
+                    else: #added this line
+                        if self.x_change > 0: #added this line
+                            self.rect.x = hit.rect.left - self.rect.width #added this line
+                        if self.x_change < 0: #added this line
+                            self.rect.x = hit.rect.right #added this line
 
         if direction == "y":
             hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
@@ -133,12 +144,16 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y = hits[0].rect.top - self.rect.height
                 if self.y_change < 0:
                     self.rect.y = hits[0].rect.bottom
-            hits = pygame.sprite.spritecollide(self, self.collide_objects, False)
+            hits = pygame.sprite.spritecollide(self, self.collide_objects, False) #added this line
             if hits: #added this line
-                if self.y_change > 0:
-                    self.rect.y = hits[0].rect.top - self.rect.height
-                if self.y_change < 0:
-                    self.rect.y = hits[0].rect.bottom
+                for hit in hits: #added this line
+                    if isinstance(hit, Door): #added this line
+                        pass #added this line
+                    else: #added this line
+                        if self.y_change > 0: #added this line
+                            self.rect.y = hit.rect.top - self.rect.height #added this line
+                        if self.y_change < 0: #added this line
+                            self.rect.y = hit.rect.bottom #added this line
 
 
     def say(self, text):
