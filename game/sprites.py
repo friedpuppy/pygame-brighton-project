@@ -1,6 +1,56 @@
 import pygame
 from config import *
 
+class Door(pygame.sprite.Sprite):
+    def __init__(self, game, door_id, x, y, npc_dialogue_key, npc_name):
+        super().__init__()
+        self.game = game
+        self.door_id = door_id
+        self.npc_dialogue_key = npc_dialogue_key
+        self.npc_name = npc_name
+        self.image = pygame.Surface((TILESIZE, TILESIZE))
+        self.image.fill(RED)  # Temporary color for visualization
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.knocked = False
+
+    def knock(self):
+        if not self.knocked:
+            self.knocked = True
+            print(f"Knocking on {self.door_id}!")
+            # Simple "Knock Knock" speech bubble for now
+            bubble = SpeechBubble(self.game, "Knock Knock", self.rect.centerx, self.rect.top)
+            self.game.group.add(bubble, layer=ABOVE_PLAYER_LAYER)
+            # Spawn NPC
+            npc = NPC(self.game, self.rect.x // TILESIZE, self.rect.y // TILESIZE, self.npc_name, self.npc_dialogue_key, self.game.npc_sprite)
+            self.game.npcs.add(npc)
+            self.game.group.add(npc, layer=NPC_LAYER)
+            self.game.collision_objects.add(npc)
+            npc.walk_out()
+            npc.interact()
+
+class SpeechBubble(pygame.sprite.Sprite):
+    def __init__(self, game, text, x, y, duration=120):
+        super().__init__()
+        self.game = game
+        self.text = text
+        self.font = pygame.font.Font('monofonto rg.otf', 24)
+        self.color = WHITE
+        self.background_color = BLACK
+        self.duration = duration
+        self.timer = 0
+        self.create_surface()
+        self.rect.center = (x, y - 30)
+
+    def create_surface(self):
+        self.image = self.font.render(self.text, True, self.color, self.background_color)
+        self.rect = self.image.get_rect()
+
+    def update(self):
+        self.timer += 1
+        if self.timer > self.duration:
+            self.kill()
 
 class Spritesheet:
     def __init__(self, file):
@@ -89,6 +139,12 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y = hits[0].rect.top - self.rect.height
                 if self.y_change < 0:
                     self.rect.y = hits[0].rect.bottom
+
+
+    def say(self, text):
+        bubble = SpeechBubble(self.game, text, self.rect.centerx, self.rect.top)
+        self.game.group.add(bubble, layer=ABOVE_PLAYER_LAYER)
+
 class Button:
     def __init__(self, x, y, width, height, fg, bg, content, fontsize):
         self.font = pygame.font.Font('monofonto rg.otf', fontsize)
@@ -148,11 +204,16 @@ class NPC(pygame.sprite.Sprite):
         self.rect.y = self.y
         self.game.group.add(self, layer=NPC_LAYER) #added this line
 
+    def walk_out(self):
+        # Simple walk out animation for now (move to the right by 3 tiles)
+        self.rect.x += TILESIZE * 3
+
+
     def update(self):
         pass
 
     def interact(self):
-        if self.dialogue:
+        if self.dialogue: #added this line
             next_line = self.dialogue.next_line()
             if next_line:
                 self.game.dialogue_box.text = next_line
@@ -164,12 +225,19 @@ class NPC(pygame.sprite.Sprite):
             else:
                 self.game.dialogue_box.toggle()
                 self.dialogue.reset()
-                if self.dialogue.quest_stage_advance == "talked_to_donor1":
-                    self.game.quest_log["repair_pier"].advance_stage(20)
+                if self.dialogue.quest_stage_advance == "talked_to_pierkeeper":
+                    if self.game.quest_log["meet_pierkeeper"].current_stage == 100:
+                        self.game.quest_log["repair_pier"].advance_stage()
+                        self.game.dialogues[self.dialogue_key] = self.game.dialogues["pierkeeper_done"]
+                    else:
+                        self.game.quest_log["meet_pierkeeper"].complete_stage()
+                        self.game.dialogues[self.dialogue_key] = self.game.dialogues["pierkeeper"]
+                elif self.dialogue.quest_stage_advance == "talked_to_donor1":
+                    self.game.quest_log["repair_pier"].advance_stage()
                     self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor1_done"]
                 elif self.dialogue.quest_stage_advance == "talked_to_donor2":
-                    self.game.quest_log["repair_pier"].advance_stage(30)
+                    self.game.quest_log["repair_pier"].advance_stage()
                     self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor2_done"]
                 elif self.dialogue.quest_stage_advance == "talked_to_donor3":
-                    self.game.quest_log["repair_pier"].advance_stage(100)
+                    self.game.quest_log["repair_pier"].complete_stage()
                     self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor3_done"]

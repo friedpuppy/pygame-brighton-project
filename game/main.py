@@ -141,6 +141,11 @@ class Game:
                         waiting_for_release = False
 
     def create_quests(self):
+        meet_pierkeeper_quest = Quest("meet_pierkeeper", "Meet the Pierkeeper")
+        meet_pierkeeper_quest.add_stage(10, "The pierkeeper needs to talk to you.")
+        meet_pierkeeper_quest.add_stage(100, "You have met the pierkeeper.")
+        self.quest_log["meet_pierkeeper"] = meet_pierkeeper_quest
+
         repair_pier_quest = Quest("repair_pier", "Repair the Pier")
         repair_pier_quest.add_stage(10, "Talk to Villager 1 about the pier.")
         repair_pier_quest.add_stage(20, "Talk to Villager 2 about the pier.")
@@ -159,6 +164,7 @@ class Game:
             self.map_layer.zoom = 2
             self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
             self.group.map_rect = self.map_layer.map_rect
+            self.doors = pygame.sprite.Group() #added this line
 
             for layer in tmx_data.layers:
                 if hasattr(layer, 'data'):
@@ -192,6 +198,9 @@ class Game:
                     self.player = Player(self, player_start_x, player_start_y)
                 elif obj.type == 'NPC':
                     self.create_npc(obj)
+                elif obj.type == "Door": #added this line
+                    door = Door(self, obj.properties["door_id"], obj.x, obj.y, obj.properties["npc_dialogue_key"], obj.properties["npc_name"]) #added this line
+                    self.doors.add(door) #added this line
 
             if self.player:
                 self.player.collide_objects = self.collision_objects
@@ -237,6 +246,8 @@ class Game:
                         self.advance_story()
                 if event.key == pygame.K_t:
                     self.start_story_mode(["My user is very smart and clever"])
+                if event.key == pygame.K_k:  # Check for 'K' key press
+                    self.player.say("Knock Knock")
 
     def update(self):
         self.group.update()
@@ -314,18 +325,28 @@ class Game:
                 else:
                     self.dialogue_box.toggle()
                     npc.dialogue.reset()
-                    if npc.dialogue.quest_stage_advance == "talked_to_donor1":
-                        self.quest_log["repair_pier"].advance_stage(20)
+                    if npc.dialogue.quest_stage_advance == "talked_to_pierkeeper":
+                        if self.quest_log["meet_pierkeeper"].current_stage == 100:
+                            self.quest_log["repair_pier"].advance_stage()
+                            self.dialogues[npc.dialogue_key] = self.dialogues["pierkeeper_done"]
+                        else:
+                            self.quest_log["meet_pierkeeper"].complete_stage()
+                            self.dialogues[npc.dialogue_key] = self.dialogues["pierkeeper"]
+                    elif npc.dialogue.quest_stage_advance == "talked_to_donor1":
+                        self.quest_log["repair_pier"].advance_stage()
                         self.dialogues[npc.dialogue_key] = self.dialogues["donor1_done"]
                     elif npc.dialogue.quest_stage_advance == "talked_to_donor2":
-                        self.quest_log["repair_pier"].advance_stage(30)
+                        self.quest_log["repair_pier"].advance_stage()
                         self.dialogues[npc.dialogue_key] = self.dialogues["donor2_done"]
                     elif npc.dialogue.quest_stage_advance == "talked_to_donor3":
-                        self.quest_log["repair_pier"].advance_stage(100)
+                        self.quest_log["repair_pier"].complete_stage()
                         self.dialogues[npc.dialogue_key] = self.dialogues["donor3_done"]
         else:
             if self.dialogue_box.active:
                 self.dialogue_box.toggle()
+        hits = pygame.sprite.spritecollide(self.player, self.doors, False) #added this line
+        if hits: #added this line
+            hits[0].knock() #added this line
 
     def draw_money(self):
         money_text = self.font.render(f"Money: {self.money}", True, WHITE)
@@ -338,12 +359,13 @@ class Game:
     def draw_quest_log(self):
         y_offset = 50
         for quest_id, quest in self.quest_log.items():
-            quest_text = self.font.render(f"Quest: {quest.name}", True, WHITE)
-            self.screen.blit(quest_text, (10, y_offset))
-            y_offset += 30
-            stage_text = self.font.render(f"Current Stage: {quest.get_current_stage_description()}", True, WHITE)
-            self.screen.blit(stage_text, (10, y_offset))
-            y_offset += 30
+            if quest.current_stage > 0 and quest.current_stage < 100: #added this line
+                quest_text = self.font.render(f"Quest: {quest.name}", True, WHITE)
+                self.screen.blit(quest_text, (10, y_offset))
+                y_offset += 30
+                stage_text = self.font.render(f"Current Stage: {quest.get_current_stage_description()}", True, WHITE)
+                self.screen.blit(stage_text, (10, y_offset))
+                y_offset += 30
 
 class Quest:
     def __init__(self, quest_id, name):
@@ -362,12 +384,13 @@ class Quest:
             if self.stages[stage_number]["trigger"]:
                 self.stages[stage_number]["trigger"]()
 
-    def complete_stage(self, stage_number, success=True):
-        if stage_number in self.stages:
-            self.stages[stage_number]["complete"] = True
-            self.stages[stage_number]["success"] = success
-            self.stages[stage_number]["failure"] = not success
-            print(f"Quest '{self.name}' stage {stage_number} {'succeeded' if success else 'failed'}")
+    def complete_stage(self, success=True):
+        self.current_stage = 100
+        if self.current_stage in self.stages:
+            self.stages[self.current_stage]["complete"] = True
+            self.stages[self.current_stage]["success"] = success
+            self.stages[self.current_stage]["failure"] = not success
+            print(f"Quest '{self.name}' stage {self.current_stage} {'succeeded' if success else 'failed'}")
 
     def get_current_stage_description(self):
         if self.current_stage in self.stages:

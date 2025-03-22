@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="7">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="11" nextobjectid="11">
  <tileset firstgid="1" source="C:/Users/callum/tiledmaps/Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
  <layer id="1" name="Street" width="30" height="30">
   <data encoding="csv">
@@ -174,6 +174,16 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="10" name="Doors">
+  <object id="8" name="door" x="448" y="448" width="32" height="32"/>
+  <object id="9" name="door" x="608" y="448" width="32" height="32">
+   <properties>
+    <property name="door_id" value="door_1"/>
+    <property name="npc_dialogue_key" value="door_1_npc"/>
+    <property name="npc_name" value="Door1NPC"/>
+   </properties>
+  </object>
+ </objectgroup>
  <objectgroup id="4" name="NPC">
   <object id="1" name="donor1" type="NPC" x="128" y="512">
    <properties>

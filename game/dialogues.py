@@ -83,7 +83,8 @@ cutscenes = {
 
 # Example dialogues with quest stage advancement and money
 dialogues = {
-    "donor1": Dialogue("Donor 1", ["Oh no, the pier is broken!", "I can give you 5 gold to help fix it.", "Good luck!"], quest_stage_advance="talked_to_donor1", money_given=5),
+    "door_1_npc": Dialogue("Door1NPC", ["Hello! I live here."]),
+    "donor1": Dialogue("Donor 1", ["Oh no, the pier is broken!", "I really hope this money helps.", "Good luck!"], quest_stage_advance="talked_to_donor1", money_given=5),
     "donor2": Dialogue("Donor 2", ["I heard about the pier.", "Here's 10 gold to help.", "I hope it gets fixed soon!"], quest_stage_advance="talked_to_donor2", money_given=10),
     "donor3": Dialogue("Donor 3", ["The pier is in bad shape.", "I can spare 2 gold.", "Be careful out there!"], quest_stage_advance="talked_to_donor3", money_given=2),
     "donor1_done": Dialogue("Donor 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
@@ -94,8 +95,9 @@ dialogues = {
         "Oh, the Chain Pier! What a terrible sight after last night's storm.",
         "The second bridge is hanging precariously, and the third is gone entirely!",
         "We need to gather funds to repair it. Can you help?",
-        "Speak to the donors, they may be able to spare some gold."
+        "Speak to the townsfolk, they may be able to pledge monetary support."
     ], quest_stage_advance="talked_to_pierkeeper"),
+    "pierkeeper_intro": Dialogue("Pierkeeper", ["Hello there, I need to talk to you about the pier."]), #added this line
     "pierkeeper_done": Dialogue("Pierkeeper", ["Thank you for helping to repair the pier!", "I have no more to say."], money_given=0),
     "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
 }
