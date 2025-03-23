@@ -7,6 +7,7 @@ from pytmx.util_pygame import load_pygame
 import pyscroll
 import pyscroll.data
 import random
+import json
 
 class Game:
     def __init__(self):
@@ -17,6 +18,10 @@ class Game:
         self.font = pygame.font.Font('monofonto rg.otf', 32)
         self.running = True
         self.game_started = False
+        self.maps = {}  # Dictionary to store loaded maps
+        self.current_map_name = 'brighton_seafront'  # Start with the first map
+        self.map_changes = {}  # Dictionary to track changes to maps
+        self.load_changes() #added this line
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
@@ -51,6 +56,30 @@ class Game:
         self.story_box_height = WIN_HEIGHT - 100
         self.story_box_x = 50
         self.story_box_y = 50
+
+
+    def load_map(self, map_name):
+        """Loads a TMX map and sets up the PyScroll group."""
+        try:
+            tmx_data = load_pygame(f'game/map/{map_name}.tmx')
+            map_data = pyscroll.data.TiledMapData(tmx_data)
+            map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
+            map_layer.zoom = 2
+            group = pyscroll.PyscrollGroup(map_layer=map_layer)
+            group.map_rect = map_layer.map_rect
+            self.maps[map_name] = {
+                'tmx_data': tmx_data,
+                'map_data': map_data,
+                'map_layer': map_layer,
+                'group': group,
+                'doors': pygame.sprite.Group(),
+                'collision_objects': pygame.sprite.Group(),
+                'blocks': pygame.sprite.Group(),
+                'npcs': pygame.sprite.Group()
+            }
+            self.create_map_objects(map_name)
+        except Exception as e:
+            print(f"Error loading map '{map_name}': {e}")
 
     # Story Mode Functions
     def start_story_mode(self, story_lines):
