@@ -1,4 +1,3 @@
-# main.py
 import pygame
 from sprites import *  # Import everything from sprites.py
 from config import *
@@ -30,6 +29,7 @@ class Game:
         self.money = 0
         self.quest_log = {}
         self.create_quests()
+        self.collide_objects = pygame.sprite.Group() #added this line
         self.all_sprites = pygame.sprite.LayeredUpdates()
 
     def create_quests(self):
@@ -44,22 +44,33 @@ class Game:
         print("The pier has been repaired!")
 
     def createTilemap(self):
+        print("createTilemap() called") #added this line
         tmx_data = load_pygame('game/map/brighton_seafront.tmx')
+        print(f"createTilemap() tmx_data: {tmx_data}") #added this line
         map_data = pyscroll.data.TiledMapData(tmx_data)
+        print(f"createTilemap() map_data: {map_data}") #added this line
         self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
         self.map_layer.zoom = 2
         self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
         self.blocks = pygame.sprite.Group()
 
         for layer in tmx_data.layers:
+            print(f"createTilemap() layer: {layer}") #added this line
             if hasattr(layer, 'data'):
                 for x, y, surf in layer.tiles():
+                    print(f"createTilemap() x: {x}, y: {y}, surf: {surf}") #added this line
                     pos = (x * 32, y * 32)
-                    tile = Tile(pos=pos, surf=surf, groups=self.group)
+                    #tile = Tile(pos=pos, surf=surf, groups=self.group) # Remove this line
                     if layer.name == 'Buildings':
-                        self.blocks.add(tile)
+                        #self.blocks.add(tile) # Remove this line
+                        block = pygame.sprite.Sprite() #create a sprite for the buildings
+                        block.image = surf #set the image to the tile image
+                        block.rect = block.image.get_rect(topleft=pos) #set the position
+                        self.blocks.add(block) #add it to the blocks group
+                        self.group.add(block) #add it to the group, so it is rendered
 
         for obj in tmx_data.objects:
+            print(f"createTilemap() obj: {obj}") #added this line
             if obj.name == 'Player':
                 player_start_x = obj.x // TILESIZE
                 player_start_y = obj.y // TILESIZE
@@ -80,6 +91,15 @@ class Game:
                     continue
                 NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, npc_sprite)
                 self.group.add(self.npcs)
+            elif obj.type == 'door': #added this line
+                door_id = obj.name #added this line
+                door_x = obj.x #added this line
+                door_y = obj.y #added this line
+                door_dialogue_key = obj.properties.get("dialogue_key") #added this line
+                door_name = obj.properties.get("npc_name") #added this line
+                door = Door(self, door_id, door_x, door_y, door_dialogue_key, door_name) #added this line
+                self.collide_objects.add(door) #added this line
+                self.group.add(door) #added this line
 
     def new(self):
         self.playing = True
@@ -145,7 +165,9 @@ class Game:
             pygame.display.update()
 
     def check_npc_interaction(self):
+        print("check_npc_interaction() called") #added this line
         hits = pygame.sprite.spritecollide(self.player, self.npcs, False)
+        print(f"check_npc_interaction() hits: {hits}") #added this line
         if hits:
             npc = hits[0]
             npc.interact()
@@ -196,6 +218,9 @@ class Quest:
             print(f"Quest '{self.name}' stage {stage_number} {'succeeded' if success else 'failed'}")
 
     def get_current_stage_description(self):
+        print(f"Quest.get_current_stage_description() called for {self.name}") #added this line
+        print(f"Quest.get_current_stage_description() self.current_stage: {self.current_stage}") #added this line
+        print(f"Quest.get_current_stage_description() self.stages: {self.stages}") #added this line
         if self.current_stage in self.stages:
             return self.stages[self.current_stage]["description"]
         return "No current stage."

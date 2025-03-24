@@ -75,7 +75,7 @@ class Player(pygame.sprite.Sprite):
         self.game = game
         self.groups = self.game.group #changed this line
         pygame.sprite.Sprite.__init__(self, self.groups)  # Call pygame.sprite.Sprite.__init__()
-        self.collide_objects = None
+        self.collide_objects = self.game.collide_objects
 
         self.x = x * TILESIZE
         self.y = y * TILESIZE
@@ -227,9 +227,13 @@ class NPC(pygame.sprite.Sprite):
     def update(self):
         pass
 
+    # sprites.py (in NPC.interact())
     def interact(self):
+        print(f"NPC.interact() called for {self.name}")  # Debugging: Check if interact is called
         if self.dialogue: #added this line
+            print(f"NPC.interact() dialogue: {self.dialogue}") #added this line
             next_line = self.dialogue.next_line()
+            print(f"NPC.interact() next_line: {next_line}") #added this line
             if next_line:
                 self.game.dialogue_box.text = next_line
                 self.game.dialogue_box.create_text_surface()
