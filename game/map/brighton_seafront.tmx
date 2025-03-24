@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="20">
- <tileset firstgid="1" source="C:/Users/callum/tiledmaps/Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="20">
+ <tileset firstgid="1" source="Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
  <layer id="1" name="Street" width="30" height="30">
   <data encoding="csv">
 408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,
