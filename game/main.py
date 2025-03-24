@@ -7,7 +7,6 @@ from pytmx.util_pygame import load_pygame
 import pyscroll
 import pyscroll.data
 import random
-import json
 
 class Game:
     def __init__(self):
@@ -52,30 +51,6 @@ class Game:
         self.story_box_height = WIN_HEIGHT - 100
         self.story_box_x = 50
         self.story_box_y = 50
-        self.createTilemap()
-
-    def load_map(self, map_name):
-        """Loads a TMX map and sets up the PyScroll group."""
-        try:
-            tmx_data = load_pygame(f'game/map/{map_name}.tmx')
-            map_data = pyscroll.data.TiledMapData(tmx_data)
-            map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
-            map_layer.zoom = 2
-            group = pyscroll.PyscrollGroup(map_layer=map_layer)
-            group.map_rect = map_layer.map_rect
-            self.maps[map_name] = {
-                'tmx_data': tmx_data,
-                'map_data': map_data,
-                'map_layer': map_layer,
-                'group': group,
-                'doors': pygame.sprite.Group(),
-                'collision_objects': pygame.sprite.Group(),
-                'blocks': pygame.sprite.Group(),
-                'npcs': pygame.sprite.Group()
-            }
-            self.create_map_objects(map_name)
-        except Exception as e:
-            print(f"Error loading map '{map_name}': {e}")
 
     # Story Mode Functions
     def start_story_mode(self, story_lines):
@@ -196,21 +171,21 @@ class Game:
             for layer in tmx_data.layers:
                 if hasattr(layer, 'data'):
                     for x, y, surf in layer.tiles():
-                        pos = (x * TILESIZE, y * TILESIZE)
+                        pos = (x * 32, y * 32)
                         if layer.name == 'Buildings':
                             rect = pygame.Rect(pos, (TILESIZE, TILESIZE))
                             block = pygame.sprite.Sprite()
-                            block.image = surf
+                            block.image = surf #changed this line
                             block.rect = rect
                             self.collision_objects.add(block)
                             self.blocks.add(block)
                             self.group.add(block, layer=BUILDING_LAYER)
-                        elif layer.name == 'Door':
-                            rect = pygame.Rect(pos, (TILESIZE, TILESIZE))
-                            door_tile = pygame.sprite.Sprite()
-                            door_tile.image = surf
-                            door_tile.rect = rect
-                            self.group.add(door_tile, layer=DOOR_LAYER)
+                        elif layer.name == 'Door': #added this line
+                            rect = pygame.Rect(pos, (TILESIZE, TILESIZE)) #added this line
+                            door_tile = pygame.sprite.Sprite() #added this line
+                            door_tile.image = surf #added this line
+                            door_tile.rect = rect #added this line
+                            self.group.add(door_tile, layer=DOOR_LAYER) #added this line
                         elif layer.name == 'AbovePlayer':
                             pass
                         elif layer.name == 'Pier Chains':
@@ -256,6 +231,7 @@ class Game:
 
     def new(self):
         self.playing = True
+        self.createTilemap()
 
     def events(self):
         for event in pygame.event.get():
@@ -280,11 +256,8 @@ class Game:
 
 
     def update(self):
-        #self.group.update()
-        #self.group.center(self.player.rect.center)
-        if self.player:
-            self.group.update()
-            self.group.center(self.player.rect.center)
+        self.group.update()
+        self.group.center(self.player.rect.center)
 
     def draw(self):
         self.screen.fill(BLACK)
