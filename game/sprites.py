@@ -16,7 +16,7 @@ class Door(pygame.sprite.Sprite):
         self.knocked = False
         self.collision_rect = pygame.Rect(self.rect.x - TILESIZE, self.rect.y, TILESIZE * 2, TILESIZE) #added this line
 
-    def knock(self):
+    def interact(self):
         if not self.knocked:
             self.knocked = True
             print(f"Knocking on {self.door_id}!")
@@ -30,9 +30,6 @@ class Door(pygame.sprite.Sprite):
             self.game.collision_objects.add(npc)
             npc.walk_out()
             npc.interact()
-
-    def knock_knock(self): #added this line
-        print(f"knock_knock() called for door {self.door_id}") #added this line
 
     def knock_knock(self): #added this line
         print(f"knock_knock() called for door {self.door_id}") #added this line
@@ -228,7 +225,8 @@ class NPC(pygame.sprite.Sprite):
         pass
 
     def interact(self):
-        if self.dialogue: #added this line
+        print(f"NPC {self.name} interact() called")
+        if self.dialogue:
             next_line = self.dialogue.next_line()
             if next_line:
                 self.game.dialogue_box.text = next_line
