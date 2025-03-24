@@ -251,7 +251,7 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_e:
                     if not self.in_story_mode and not self.dialogue_box.active:
-                        self.check_interaction() #changed this line
+                        self.check_npc_interaction()
                     else:
                         self.advance_story()
                 if event.key == pygame.K_RETURN:
@@ -263,18 +263,6 @@ class Game:
                     hits = pygame.sprite.spritecollide(self.player, self.doors, False) #added this line
                     if hits: #added this line
                         hits[0].knock_knock() #added this line
-
-    def check_interaction(self):
-        # Check for collisions with any interactive object (NPC or Door)
-        hits = pygame.sprite.spritecollide(self.player, self.collision_objects, False)
-        if hits:
-            for hit in hits:
-                if isinstance(hit, NPC) or isinstance(hit, Door):
-                    hit.interact()
-        else:
-            if self.dialogue_box.active:
-                self.dialogue_box.toggle()
-
 
 
     def update(self):

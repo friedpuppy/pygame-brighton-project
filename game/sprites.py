@@ -16,7 +16,7 @@ class Door(pygame.sprite.Sprite):
         self.knocked = False
         self.collision_rect = pygame.Rect(self.rect.x - TILESIZE, self.rect.y, TILESIZE * 2, TILESIZE) #added this line
 
-    def interact(self):
+    def knock(self):
         if not self.knocked:
             self.knocked = True
             print(f"Knocking on {self.door_id}!")
@@ -33,6 +33,7 @@ class Door(pygame.sprite.Sprite):
 
     def knock_knock(self): #added this line
         print(f"knock_knock() called for door {self.door_id}") #added this line
+
 
 class SpeechBubble(pygame.sprite.Sprite):
     def __init__(self, game, text, x, y, duration=120):
