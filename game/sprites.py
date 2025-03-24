@@ -73,8 +73,7 @@ class Spritesheet:
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.game = game
-        self.groups = self.game.group #changed this line
-        pygame.sprite.Sprite.__init__(self, self.groups)  # Call pygame.sprite.Sprite.__init__()
+        self.groups = self.game.group
         self.collide_objects = self.game.collide_objects
 
         self.x = x * TILESIZE
@@ -91,6 +90,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()  # Get the rect from the image
         self.rect.x = self.x  # Set the x position
         self.rect.y = self.y  # Set the y position
+        pygame.sprite.Sprite.__init__(self, self.groups)  # Call pygame.sprite.Sprite.__init__()
         self.game.group.add(self, layer=PLAYER_LAYER) #added this line
 
     def update(self):
@@ -159,6 +159,7 @@ class Player(pygame.sprite.Sprite):
     def say(self, text):
         bubble = SpeechBubble(self.game, text, self.rect.centerx, self.rect.top)
         self.game.group.add(bubble, layer=ABOVE_PLAYER_LAYER)
+
 
 class Button:
     def __init__(self, x, y, width, height, fg, bg, content, fontsize):
