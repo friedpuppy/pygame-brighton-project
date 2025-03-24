@@ -33,6 +33,8 @@ class Game:
         self.money = 0
         self.quest_log = {}
         self.create_quests()
+        # Start the prologue quest
+        self.quest_log["prologue"].advance_stage(10) #added this line
         self.collision_objects = pygame.sprite.Group()
         self.blocks = pygame.sprite.Group()
         self.has_played_cutscene = False
@@ -141,6 +143,13 @@ class Game:
                         waiting_for_release = False
 
     def create_quests(self):
+        # Prologue Quest
+        prologue_quest = Quest("prologue", "Talk to the Pierkeeper")
+        prologue_quest.add_stage(10, "Go and speak to the pierkeeper.")
+        prologue_quest.add_stage(100, "You have spoken to the pierkeeper.")
+        self.quest_log["prologue"] = prologue_quest
+
+        # Main Quest
         meet_pierkeeper_quest = Quest("meet_pierkeeper", "Meet the Pierkeeper")
         meet_pierkeeper_quest.add_stage(10, "The pierkeeper needs to talk to you.")
         meet_pierkeeper_quest.add_stage(100, "You have met the pierkeeper.")
@@ -152,6 +161,7 @@ class Game:
         repair_pier_quest.add_stage(30, "Talk to the Guard about the pier.")
         repair_pier_quest.add_stage(100, "The pier has been repaired.", trigger=self.pier_repaired)
         self.quest_log["repair_pier"] = repair_pier_quest
+
 
     def pier_repaired(self):
         print("The pier has been repaired!")
@@ -215,14 +225,14 @@ class Game:
             npc_start_x = obj.x // TILESIZE
             npc_start_y = obj.y // TILESIZE
             npc_name = obj.properties.get("npc_name")
-            npc_dialogue_key = obj.properties.get("dialogue_key")
+            npc_dialogue_key = obj.properties.get("dialogue_key") #added this line
             if npc_name is None:
                 print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
                 return
             if npc_dialogue_key is None:
                 print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
                 return
-            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, self.npc_sprite)
+            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, self.npc_sprite) #changed this line
             self.group.add(npc, layer=NPC_LAYER)
             self.collision_objects.add(npc)
             self.npcs.add(npc)
@@ -266,7 +276,7 @@ class Game:
             self.dialogue_box.draw()
             self.draw_money()
             self.draw_quest_log()
-            self.draw_fps()
+            #self.draw_fps() # framerate counter, see def draw_fps
         else:
             self.draw_story_mode()
 
@@ -339,10 +349,11 @@ class Game:
                     npc.dialogue.reset()
                     if npc.dialogue.quest_stage_advance == "talked_to_pierkeeper":
                         if self.quest_log["meet_pierkeeper"].current_stage == 100:
-                            self.quest_log["repair_pier"].advance_stage()
+                            self.quest_log["repair_pier"].advance_stage(10)
                             self.dialogues[npc.dialogue_key] = self.dialogues["pierkeeper_done"]
                         else:
-                            self.quest_log["meet_pierkeeper"].complete_stage()
+                            self.quest_log["prologue"].complete_stage() #added this line
+                            self.quest_log["meet_pierkeeper"].advance_stage(10) #added this line
                             self.dialogues[npc.dialogue_key] = self.dialogues["pierkeeper"]
                     elif npc.dialogue.quest_stage_advance == "talked_to_donor1":
                         self.quest_log["repair_pier"].advance_stage()
@@ -359,6 +370,7 @@ class Game:
         hits = pygame.sprite.spritecollide(self.player, self.doors, False) #added this line
         if hits: #added this line
             hits[0].knock() #added this line
+
 
     def draw_money(self):
         money_text = self.font.render(f"Money: {self.money}", True, WHITE)

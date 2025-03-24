@@ -210,8 +210,8 @@ class NPC(pygame.sprite.Sprite):
         self.height = TILESIZE
 
         self.name = name
-        self.dialogue_key = dialogue_key
-        self.dialogue = self.game.dialogues.get(self.dialogue_key)
+        self.dialogue_key = dialogue_key #added this line
+        self.dialogue = self.game.dialogues.get(self.dialogue_key) #changed this line
 
         self.image = sprite #changed this line
         self.rect = self.image.get_rect()

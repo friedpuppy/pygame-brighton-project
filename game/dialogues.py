@@ -97,7 +97,7 @@ dialogues = {
         "We need to gather funds to repair it. Can you help?",
         "Speak to the townsfolk, they may be able to pledge monetary support."
     ], quest_stage_advance="talked_to_pierkeeper"),
-    "pierkeeper_intro": Dialogue("Pierkeeper", ["Hello there, I need to talk to you about the pier."]), #added this line
+    "pierkeeper_intro": Dialogue("Pierkeeper", ["Hello there, I need to talk to you about the pier."], quest_stage_advance="talked_to_pierkeeper"), #added this line
     "pierkeeper_done": Dialogue("Pierkeeper", ["Thank you for helping to repair the pier!", "I have no more to say."], money_given=0),
     "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
 }
