@@ -266,11 +266,17 @@ class Game:
             self.dialogue_box.draw()
             self.draw_money()
             self.draw_quest_log()
+            self.draw_fps()
         else:
             self.draw_story_mode()
 
         pygame.display.flip()  # Use flip instead of update
         self.clock.tick(FPS)
+
+    def draw_fps(self):
+        fps = int(self.clock.get_fps())
+        fps_text = self.font.render(f"FPS: {fps}", True, WHITE)
+        self.screen.blit(fps_text, (10, 50)) #changed this line
 
     def main(self):
         while self.playing:
