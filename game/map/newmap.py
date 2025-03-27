@@ -19,9 +19,6 @@ BLUE = (0, 0, 150)       # Map 2 color
 YELLOW = (255, 255, 0)   # Transition zone color
 
 # --- 1. Define Map Representations (with Transition Zones) ---
-# Now, each map includes a list of 'transitions'.
-# Each transition has a 'rect' (the zone), 'target_map_id',
-# and 'target_spawn_point' (where player appears on the new map).
 MAP_DATA = {
     "map1": {
         "bg_color": GREEN,
@@ -32,9 +29,9 @@ MAP_DATA = {
                 "rect": pygame.Rect(SCREEN_WIDTH - 50, SCREEN_HEIGHT // 2 - 50, 50, 100),
                 "target_map_id": "map2",
                 # Spawn player just inside the left edge of Map 2
-                "target_spawn_point": (PLAYER_SIZE // 2 + 10, SCREEN_HEIGHT // 2)
+                # Adjusted slightly further from edge to be safer, but the flag is the main fix
+                "target_spawn_point": (PLAYER_SIZE // 2 + 51, SCREEN_HEIGHT // 2)
             }
-            # Add more transition zones for map1 here if needed
         ]
     },
     "map2": {
@@ -46,9 +43,9 @@ MAP_DATA = {
                 "rect": pygame.Rect(0, SCREEN_HEIGHT // 2 - 50, 50, 100),
                 "target_map_id": "map1",
                 # Spawn player just inside the right edge of Map 1
-                "target_spawn_point": (SCREEN_WIDTH - PLAYER_SIZE // 2 - 10, SCREEN_HEIGHT // 2)
+                # Adjusted slightly further from edge to be safer, but the flag is the main fix
+                "target_spawn_point": (SCREEN_WIDTH - PLAYER_SIZE // 2 - 51, SCREEN_HEIGHT // 2)
             }
-            # Add more transition zones for map2 here
         ]
     }
 }
@@ -62,13 +59,11 @@ font = pygame.font.Font(None, 36)
 
 # --- Player Setup ---
 player_rect = pygame.Rect(0, 0, PLAYER_SIZE, PLAYER_SIZE)
-# Start player near the center, slightly offset to avoid immediate transitions if zones are there
 player_rect.center = (SCREEN_WIDTH // 2 + 50, SCREEN_HEIGHT // 2)
 
 # --- 2. Manage Game States ---
-current_map_id = "map1"  # Start with map1
-# No timer needed anymore
-# last_switch_time = pygame.time.get_ticks() # REMOVED
+current_map_id = "map1"
+just_transitioned = False # <<< ADDED FLAG
 
 # --- Game Loop ---
 running = True
@@ -101,31 +96,40 @@ while running:
     # Get the data for the currently active map
     active_map_data = MAP_DATA[current_map_id]
 
-    # Check for collisions with transition zones *on the current map*
-    for transition in active_map_data.get("transitions", []): # Use .get for safety
-        transition_rect = transition["rect"]
-        if player_rect.colliderect(transition_rect):
-            # Collision detected! Time to switch maps.
+    # <<< MODIFIED SECTION START >>>
+    # Only check for transitions if we didn't *just* transition in the previous frame
+    if not just_transitioned:
+        # Check for collisions with transition zones *on the current map*
+        for transition in active_map_data.get("transitions", []): # Use .get for safety
+            transition_rect = transition["rect"]
+            if player_rect.colliderect(transition_rect):
+                # Collision detected! Time to switch maps.
 
-            # --- 4. Load/Unload Maps (Switch State) ---
-            target_map = transition["target_map_id"]
-            spawn_point = transition["target_spawn_point"]
+                # --- 4. Load/Unload Maps (Switch State) ---
+                target_map = transition["target_map_id"]
+                spawn_point = transition["target_spawn_point"]
 
-            print(f"Transitioning from {active_map_data['name']} to {MAP_DATA[target_map]['name']} via zone collision.")
+                print(f"Transitioning from {active_map_data['name']} to {MAP_DATA[target_map]['name']} via zone collision.")
 
-            # Change the current map ID
-            current_map_id = target_map
+                # Change the current map ID
+                current_map_id = target_map
 
-            # Move the player to the spawn point on the new map
-            player_rect.center = spawn_point
+                # Move the player to the spawn point on the new map
+                player_rect.center = spawn_point
 
-            # Update active_map_data for drawing this frame on the new map
-            active_map_data = MAP_DATA[current_map_id]
+                # Update active_map_data for drawing this frame on the new map
+                active_map_data = MAP_DATA[current_map_id]
 
-            # Important: Break out of the transition check loop
-            # Prevents accidentally triggering multiple transitions in one frame
-            # if zones somehow overlapped or player moved very fast.
-            break
+                # Set the flag to prevent immediate re-transition
+                just_transitioned = True # <<< SET FLAG HERE
+
+                # Important: Break out of the transition check loop
+                break # Exit the 'for transition...' loop
+
+    else:
+        # If we skipped transition checks this frame, reset the flag for the next frame
+        just_transitioned = False # <<< RESET FLAG HERE
+    # <<< MODIFIED SECTION END >>>
 
 
     # --- Drawing ---
@@ -143,8 +147,6 @@ while running:
 
     # 4. Draw the player
     pygame.draw.rect(screen, PLAYER_COLOR, player_rect)
-
-    # 5. Timer info removed
 
     # --- Update Display ---
     pygame.display.flip()
