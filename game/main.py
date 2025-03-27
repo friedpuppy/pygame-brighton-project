@@ -20,7 +20,7 @@ class Game:
         self.playing = False
         self.portals = pygame.sprite.Group()
         self.current_map_index = 0
-        self.maps = ['game/map/mayor_brighton_seafront.tmx', 'game/map/map2.tmx']
+        self.maps = ['game/map/mayor_brighton_seafront.tmx', 'game/map/bcityv2.tmx']
         self.portal_pairs = {
             'portal1': 'portal2',
             'portal2': 'portal1'
@@ -274,6 +274,7 @@ class Game:
                     portal = Portal(self, obj.properties["portal_id"], obj.x, obj.y)
                     self.portals.add(portal)
                     self.collision_objects.add(portal)
+                    
 
             if self.player:
                 self.player.collide_objects = self.collision_objects
@@ -324,19 +325,10 @@ class Game:
                     self.show_t_dialogue()
                 if event.key == pygame.K_m:
                     self.show_m_dialogue()
-                if event.key == pygame.K_i:
+                if event.key == pygame.K_i:  # Moved this line inside KEYDOWN
                     self.check_portal_interaction()
-                #if event.key == pygame.K_m: #removed this line
-                #    hits = pygame.sprite.spritecollide(self.player, self.doors, False) #removed this line
-                #    if hits: #removed this line
-                #        hits[0].interact() #removed this line
-                #if event.key == pygame.K_i: #removed this line
-                #    self.check_portal_interaction() #removed this line
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_t:
-                    pass
-                if event.key == pygame.K_m:
-                    pass
+                pass
 
     def show_t_dialogue(self):
         if not self.t_dialogue_active:
@@ -384,8 +376,10 @@ class Game:
             self.m_dialogue_active = False
             self.dialogue_box.toggle()
 
+
     def check_interaction(self):
         # Check for collisions with any interactive object (NPC or Door)
+        
         hits = pygame.sprite.spritecollide(self.player, self.collision_objects, False)
         if hits:
             for hit in hits:
@@ -423,9 +417,9 @@ class Game:
         while self.playing:
             self.events()
             self.update()
-            self.check_interaction()
+            if self.player:
+                self.check_interaction()
             self.draw()
-        self.running = False
 
     def game_over(self):
         pass

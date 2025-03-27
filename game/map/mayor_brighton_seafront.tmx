@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="17" nextobjectid="30">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="20" nextobjectid="35">
  <tileset firstgid="1" source="C:/Users/callum/tiledmaps/Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
  <tileset firstgid="1289" source="C:/Users/callum/tiledmaps/colonial.tsx"/>
+ <tileset firstgid="2313" source="C:/Users/callum/tiledmaps/mayor.tsx"/>
+ <tileset firstgid="2314" source="C:/Users/callum/tiledmaps/Generated Image March 27, 2025 - 3_40PM.tsx"/>
+ <tileset firstgid="2315" source="C:/Users/callum/tiledmaps/Gdenerated Image March 27, 2025 - 3_40PM.tsx"/>
+ <tileset firstgid="2316" source="C:/Users/callum/tiledmaps/Generated Image March 27, 2025 - 3_40PM.tsx"/>
+ <tileset firstgid="2317" source="C:/Users/callum/tiledmaps/Generated Image March 27, 2025 - 3_40PM.tsx"/>
  <layer id="1" name="Street" width="30" height="30">
   <data encoding="csv">
 408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,
@@ -56,9 +61,9 @@
 0,1769,1770,1771,1772,1773,1774,1775,1776,1777,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,1806,0,0,0,0,0,0,0,1806,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1143,0,0,0,0,0,
 0,1838,0,0,0,0,0,0,0,1838,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,1870,0,0,0,0,0,0,0,1870,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,1870,0,0,2313,0,0,0,0,1870,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,1902,0,0,0,0,0,0,0,1902,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2315,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -83,20 +88,7 @@
  <objectgroup id="3" name="Spawn Point">
   <object id="4" name="Player" x="416" y="704"/>
  </objectgroup>
- <objectgroup id="4" name="NPC">
-  <object id="1" name="donor1" type="NPC" x="179" y="571.5">
-   <properties>
-    <property name="dialogue_key" value="Mayor"/>
-    <property name="npc_name" value="Mayor"/>
-   </properties>
-  </object>
-  <object id="6" name="dockkeeper" type="NPC" x="560" y="758.333">
-   <properties>
-    <property name="dialogue_key" value="pierkeeper"/>
-    <property name="npc_name" value="Pierkeeper"/>
-   </properties>
-  </object>
- </objectgroup>
+ <objectgroup id="4" name="NPC"/>
  <objectgroup id="14" name="Collide">
   <object id="20" x="544" y="704" width="32" height="32"/>
   <object id="21" x="512" y="736" width="32" height="32"/>
