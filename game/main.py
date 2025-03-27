@@ -46,7 +46,7 @@ class Game:
                                 "Ok, I will go and get the money"]
         self.current_m_dialogue_index = 0
         self.m_dialogue_active = False
-
+        
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
         self.enemy_spritesheet = Spritesheet('game/img/enemy.png')
@@ -283,10 +283,11 @@ class Game:
 
     def check_interaction(self):
         # Check for collisions with any interactive object (NPC or Door)
+        
         hits = pygame.sprite.spritecollide(self.player, self.collision_objects, False)
         if hits:
             for hit in hits:
-                if isinstance(hit, NPC) or isinstance(hit, Door) or isinstance(hit, Portal):
+                if isinstance(hit, NPC) or isinstance(hit, Door):
                     hit.interact()
         else:
             if self.dialogue_box.active:
@@ -325,20 +326,47 @@ class Game:
                     self.show_t_dialogue()
                 if event.key == pygame.K_m:
                     self.show_m_dialogue()
-                if event.key == pygame.K_i:  # Moved this line inside KEYDOWN
+                if event.key == pygame.K_i:
                     self.check_portal_interaction()
             if event.type == pygame.KEYUP:
                 pass
 
     def show_t_dialogue(self):
-        if not self.t_dialogue_active:
+        if self.t_dialogue_active:
+            if self.current_t_dialogue_index < len(self.t_key_dialogue):
+
+                self.current_t_dialogue_index += 1
+                if self.current_t_dialogue_index >= len(self.t_key_dialogue):
+                    print("Hello World")                     
+                    self.current_t_dialogue_index = 0
+                    self.t_dialogue_active = False
+                    print("runnng box.toggle now")
+                    self.dialogue_box.toggle()
+                else:
+                    # Use render_textrect for word wrapping
+                    text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
+                    try:
+                        self.dialogue_box.text = self.t_key_dialogue[self.current_t_dialogue_index] #added this line
+                        text_surface = render_textrect(self.t_key_dialogue[self.current_t_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
+                        self.dialogue_box.text_surface = text_surface
+                        self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+                    except TextRectException as e:
+                        print(f"Error rendering text: {e}")
+                        self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
+                        self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+            else:
+                self.current_t_dialogue_index = 0
+                self.t_dialogue_active = False
+                self.dialogue_box.toggle()
+            
+        else:
+    
             self.t_dialogue_active = True
             self.dialogue_box.toggle()
-
-        if self.current_t_dialogue_index < len(self.t_key_dialogue):
             # Use render_textrect for word wrapping
             text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
             try:
+                self.dialogue_box.text = self.t_key_dialogue[self.current_t_dialogue_index] #added this line
                 text_surface = render_textrect(self.t_key_dialogue[self.current_t_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
                 self.dialogue_box.text_surface = text_surface
                 self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
@@ -347,21 +375,37 @@ class Game:
                 self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
                 self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
 
-            self.current_t_dialogue_index += 1
-        else:
-            self.current_t_dialogue_index = 0
-            self.t_dialogue_active = False
-            self.dialogue_box.toggle()
-
     def show_m_dialogue(self):
-        if not self.m_dialogue_active:
+        if self.m_dialogue_active:
+            if self.current_m_dialogue_index < len(self.m_key_dialogue):
+                self.current_m_dialogue_index += 1
+                if self.current_m_dialogue_index >= len(self.m_key_dialogue):
+                    self.current_m_dialogue_index = 0
+                    self.m_dialogue_active = False
+                    self.dialogue_box.toggle()
+                else:
+                    # Use render_textrect for word wrapping
+                    text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
+                    try:
+                        self.dialogue_box.text = self.m_key_dialogue[self.current_m_dialogue_index] #added this line
+                        text_surface = render_textrect(self.m_key_dialogue[self.current_m_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
+                        self.dialogue_box.text_surface = text_surface
+                        self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+                    except TextRectException as e:
+                        print(f"Error rendering text: {e}")
+                        self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
+                        self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+            else:
+                self.current_m_dialogue_index = 0
+                self.m_dialogue_active = False
+                self.dialogue_box.toggle()
+        else:
             self.m_dialogue_active = True
             self.dialogue_box.toggle()
-
-        if self.current_m_dialogue_index < len(self.m_key_dialogue):
             # Use render_textrect for word wrapping
             text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
             try:
+                self.dialogue_box.text = self.m_key_dialogue[self.current_m_dialogue_index] #added this line
                 text_surface = render_textrect(self.m_key_dialogue[self.current_m_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
                 self.dialogue_box.text_surface = text_surface
                 self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
@@ -369,12 +413,6 @@ class Game:
                 print(f"Error rendering text: {e}")
                 self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
                 self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
-
-            self.current_m_dialogue_index += 1
-        else:
-            self.current_m_dialogue_index = 0
-            self.m_dialogue_active = False
-            self.dialogue_box.toggle()
 
 
     def check_interaction(self):
@@ -401,6 +439,8 @@ class Game:
             self.dialogue_box.draw()
             self.draw_money()
             self.draw_quest_log()
+            # pygame.draw.rect(self.screen, RED, (50, 550, 600, 200), 2)
+            # pygame.draw.circle(self.screen, GREEN, (60, 560), 5)
             #self.draw_fps() # framerate counter, see def draw_fps
         else:
             self.draw_story_mode()
@@ -414,6 +454,7 @@ class Game:
         self.screen.blit(fps_text, (10, 50)) #changed this line
 
     def main(self):
+        self.playing = True
         while self.playing:
             self.events()
             self.update()
@@ -550,88 +591,8 @@ class Quest:
             return self.stages[self.current_stage]["description"]
         return "No current stage."
 
-class TextRectException:
-    def __init__(self, message = None):
-        self.message = message
-    def __str__(self):
-        return self.message
-
-def render_textrect(string, font, rect, text_color, background_color, justification=0):
-    """
-    Returns a surface containing the passed text string, reformatted
-    to fit within the given rect, word-wrapped as necessary. The text
-    will be anti-aliased.
-
-    Takes the following arguments:
-
-    string - the text you wish to render. \n begins a new line.
-    font - a Font object
-    rect - a rect object that the text will be drawn into.
-    text_color - a color tuple (ex (255, 0, 0) for red)
-    background_color - a color tuple (ex (0, 0, 0) for black)
-    justification - 0 (default) left-justified
-                    1 centered
-                    2 right-justified
-
-    Returns
-        Surface object with the text drawn onto it.
-    """
-
-    final_lines = []
-
-    requested_lines = string.splitlines()
-
-    # Create a series of lines that will fit on the provided
-    # rectangle.
-
-    for requested_line in requested_lines:
-        if font.size(requested_line)[0] > rect.width:
-            words = requested_line.split(' ')
-            # if any of our words are too long to fit, return.
-            for word in words:
-                if font.size(word)[0] >= rect.width:
-                    raise TextRectException(
-                        "The word " + word + " is too long to fit in the rect passed.")
-            # Start a new line
-            accumulated_line = ""
-            for word in words:
-                test_line = accumulated_line + word + " "
-                # Build the line while the words fit.
-                if font.size(test_line)[0] < rect.width:
-                    accumulated_line = test_line
-                else:
-                    final_lines.append(accumulated_line)
-                    accumulated_line = word + " "
-            final_lines.append(accumulated_line)
-        else:
-            final_lines.append(requested_line)
-
-    # Let's try to write the text out on the surface.
-
-    surface = pygame.Surface(rect.size)
-    surface.fill(background_color)
-
-    accumulated_height = 0
-    for line in final_lines:
-        if accumulated_height + font.size(line)[1] >= rect.height:
-            raise TextRectException("Once word-wrapped, the text string was too tall to fit in the rect.")
-        if line != "":
-            tempsurface = font.render(line, 1, text_color)
-            if justification == 0:
-                surface.blit(tempsurface, (0, accumulated_height))
-            elif justification == 1:
-                surface.blit(tempsurface, ((rect.width - tempsurface.get_width()) / 2, accumulated_height))
-            elif justification == 2:
-                surface.blit(tempsurface, (rect.width - tempsurface.get_width(), accumulated_height))
-            else:
-                raise TextRectException("Invalid justification argument: " + str(justification))
-        accumulated_height += font.size(line)[1]
-
-    return surface
-
 g = Game()
 g.intro_screen()
-#g.new()
 while g.running:
     g.main()
     g.game_over()
