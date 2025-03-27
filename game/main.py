@@ -20,11 +20,7 @@ class Game:
         self.playing = False
         self.portals = pygame.sprite.Group()
         self.current_map_index = 0
-        self.maps = ['game/map/mayor_brighton_seafront.tmx', 'game/map/map2.tmx']
-        self.portal_pairs = {
-            'portal1': 'portal2',
-            'portal2': 'portal1'
-        }
+        self.maps = ['game/map/mayor_brighton_seafront.tmx', 'game/map/bcityv2.tmx']
         self.current_map = self.maps[self.current_map_index]
         self.group = None
 
@@ -172,30 +168,95 @@ class Game:
                         waiting_for_release = False
 
     def check_portal_interaction(self):
-        hits = pygame.sprite.spritecollide(self.player, self.portals, False)
+        # Check cooldown FIRST
+        if self.player.teleport_cooldown > 0:
+            return # Still cooling down from last teleport
+
+        # Check collision with portals group
+        # Use player.rect for collision checking
+        hits = pygame.sprite.spritecollide(self.player, self.portals, False, pygame.sprite.collide_rect) # Use simple rect collision
+
         if hits:
-            # No need to find a destination portal ID anymore
-            self.change_map(self.get_next_map())
+            portal = hits[0] # Get the specific portal hit
+            print(f"Player colliding with portal: {portal.portal_id}")
+
+            # Check if the portal has valid destination data
+            if portal.can_teleport():
+                print(f"Portal has valid destination: {portal.destination_map} ({portal.destination_x}, {portal.destination_y})")
+                # Trigger the map change
+                self.change_map(portal.destination_map, portal.destination_x, portal.destination_y)
+            else:
+                # This portal is decorative or misconfigured
+                print(f"Portal {portal.portal_id} has no valid destination properties set in Tiled!")
+                # Optionally add a small cooldown even for invalid portals to avoid spamming console
+                # self.player.teleport_cooldown = 5
 
     def get_next_map(self):
         # Cycle through maps
         self.current_map_index = (self.current_map_index + 1) % len(self.maps)
         return self.maps[self.current_map_index]
 
-    def change_map(self, destination_map):
-        print(f"Changing map to: {destination_map}")
-        self.current_map = destination_map
-        self.player.teleport_cooldown = 30  # Reset cooldown
-        self.createTilemap()
-        self.group.center(self.player.rect.center)
+    # Pass target coordinates (in pixels)
+    def change_map(self, destination_map_path, target_x, target_y):
+        print(f"Attempting to change map to: {destination_map_path} at ({target_x}, {target_y})")
 
-        # Find the player start position in the new map
-        for obj in self.tmx_data.objects:
-            if obj.name == 'Player':
-                self.player.rect.x = obj.x
-                self.player.rect.y = obj.y
-                self.group.center(self.player.rect.center)
-                break
+        # Basic validation
+        if not destination_map_path or target_x is None or target_y is None:
+            print("Error: Invalid destination data for map change.")
+            return
+        if not isinstance(target_x, (int, float)) or not isinstance(target_y, (int, float)):
+             print(f"Error: Invalid target coordinates ({target_x}, {target_y})")
+             return
+
+
+        # 1. Remove player from the current pyscroll group (safe if group doesn't exist yet)
+        if hasattr(self, 'group') and self.group and self.player in self.group:
+            self.group.remove(self.player)
+            print("Player removed from old group.")
+
+        # 2. Update current map path
+        self.current_map = destination_map_path
+        # Optional: Update index if you still use the list for something
+        try:
+            self.current_map_index = self.maps.index(destination_map_path)
+        except ValueError:
+            print(f"Warning: {destination_map_path} not found in self.maps list.")
+            pass # Continue anyway
+
+        # 3. Load the new map and create its sprites/groups
+        # createTilemap now handles clearing old sprites (except player)
+        self.createTilemap()
+
+        # Check if createTilemap failed (e.g., file not found)
+        if not self.running or not hasattr(self, 'group') or not self.group:
+             print("Map change failed because createTilemap did not succeed.")
+             # Maybe try loading a fallback map?
+             return
+
+
+        # 4. Position the player using PIXEL coordinates
+        self.player.x = target_x
+        self.player.y = target_y
+        self.player.rect.topleft = (target_x, target_y)
+        print(f"Player position set to: {self.player.rect.topleft}")
+
+
+        # 5. Add player to the NEW pyscroll group
+        self.group.add(self.player, layer=PLAYER_LAYER)
+        print("Player added to new group.")
+
+        # 6. Update player's collision group reference (already done in createTilemap, but safe to repeat)
+        self.player.collide_objects = self.collision_objects
+
+        # 7. Center the camera on the player in the new map
+        self.group.center(self.player.rect.center)
+        print("Camera centered.")
+
+        # 8. Set teleport cooldown to prevent immediate re-triggering
+        self.player.teleport_cooldown = 30 # e.g., 0.5 seconds at 60 FPS
+        print("Teleport cooldown set.")
+
+        print(f"Map change to {destination_map_path} complete.")
 
     def create_quests(self):
         # Prologue Quest
@@ -314,52 +375,47 @@ class Game:
         self.playing = True
         self.createTilemap()
 
-    def events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-                self.playing = False
+        def events(self):
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    self.playing = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_t:
                     self.show_t_dialogue()
-                if event.key == pygame.K_m:
-                    self.show_m_dialogue()
-                if event.key == pygame.K_i:
-                    self.check_portal_interaction()
-                #if event.key == pygame.K_m: #removed this line
-                #    hits = pygame.sprite.spritecollide(self.player, self.doors, False) #removed this line
-                #    if hits: #removed this line
-                #        hits[0].interact() #removed this line
-                #if event.key == pygame.K_i: #removed this line
-                #    self.check_portal_interaction() #removed this line
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_t:
-                    pass
-                if event.key == pygame.K_m:
-                    pass
+                elif event.key == pygame.K_m: # Changed K_m handling
+                    # Check for Door interaction first if pressing 'M' near a door
+                    door_hits = pygame.sprite.spritecollide(self.player, self.doors, False)
+                    if door_hits:
+                         door_hits[0].knock() # Or interact() if 'knock' isn't the desired action
+                    else:
+                         # If not near a door, trigger Mayor dialogue (or other 'M' action)
+                         self.show_m_dialogue()
 
-    def show_t_dialogue(self):
-        if not self.t_dialogue_active:
-            self.t_dialogue_active = True
-            self.dialogue_box.toggle()
+                # REMOVE K_i check if using collision-based portals
+                # if event.key == pygame.K_i:
+                #     self.check_portal_interaction() # Can be used for key-press activation if desired
 
-        if self.current_t_dialogue_index < len(self.t_key_dialogue):
-            # Use render_textrect for word wrapping
-            text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
-            try:
-                text_surface = render_textrect(self.t_key_dialogue[self.current_t_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
-                self.dialogue_box.text_surface = text_surface
-                self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
-            except TextRectException as e:
-                print(f"Error rendering text: {e}")
-                self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
-                self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
 
-            self.current_t_dialogue_index += 1
-        else:
-            self.current_t_dialogue_index = 0
-            self.t_dialogue_active = False
-            self.dialogue_box.toggle()
+    def update(self):
+        if self.group and self.player:
+            # Update the player (movement, collision)
+            self.player.update()
+
+            # Check for portal collision AFTER player movement is resolved
+            self.check_portal_interaction() # Check collision every frame
+
+            # Update other sprites in the group (NPCs, effects, etc.)
+            self.group.update() # Calls update() on all sprites in the pyscroll group
+
+            # Keep the camera centered on the player
+            self.group.center(self.player.rect.center)
+
+        # Update teleport cooldown
+        if self.player and self.player.teleport_cooldown > 0:
+             self.player.teleport_cooldown -= 1
+
+        # Remove the separate self.check_interaction() call from main loop if covered elsewhere
 
     def show_m_dialogue(self):
         if not self.m_dialogue_active:
