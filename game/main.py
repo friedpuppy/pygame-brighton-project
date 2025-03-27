@@ -12,11 +12,40 @@ class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-        pygame.display.set_caption("A Pier to the Past")  # Set window title
+        pygame.display.set_caption("A Pier to the Past")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font('monofonto rg.otf', 32)
         self.running = True
         self.game_started = False
+        self.playing = False
+        self.portals = pygame.sprite.Group()
+        self.current_map_index = 0
+        self.maps = ['game/map/mayor_brighton_seafront.tmx', 'game/map/map2.tmx']
+        self.portal_pairs = {
+            'portal1': 'portal2',
+            'portal2': 'portal1'
+        }
+        self.current_map = self.maps[self.current_map_index]
+        self.group = None
+
+        # Dialogue for the "T" key
+        self.t_key_dialogue = ["Hello. Oh my goodness what has happened",
+                                "Oh you said the pier has collapsed?",
+                                "and you think it is irrepairable?",
+                                "How much is needed to fix it?",
+                                "Mr. Matthews: Thirty thousand plus three thousand for material",
+                                "Ok I will go and get the money"]
+        self.current_t_dialogue_index = 0
+        self.t_dialogue_active = False
+
+        # Dialogue for the "M" key
+        self.m_key_dialogue = ["Hello Mr Mayor, did you hear about the chain pier?",
+                                "Well, being a patriotic resident of Brighton I intend to rebuild it. ",
+                                "Can I ask the council for the money? It will be one hundred, three thousand pounds",
+                                "Mayor: Ok. If you can raise thirty thousand pounds in the local community, the council will give you the balance to repair the pier",
+                                "Ok, I will go and get the money"]
+        self.current_m_dialogue_index = 0
+        self.m_dialogue_active = False
 
         self.character_spritesheet = Spritesheet('game/img/character.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
@@ -34,7 +63,7 @@ class Game:
         self.quest_log = {}
         self.create_quests()
         # Start the prologue quest
-        self.quest_log["prologue"].advance_stage(10) #added this line
+        self.quest_log["prologue"].advance_stage(10)
         self.collision_objects = pygame.sprite.Group()
         self.blocks = pygame.sprite.Group()
         self.has_played_cutscene = False
@@ -127,7 +156,7 @@ class Game:
                     image_rect = scaled_image.get_rect(center=(WIN_WIDTH // 2, int(WIN_HEIGHT * 0.4)))
                     self.screen.blit(scaled_image, image_rect)
 
-            pygame.display.flip()  # Use flip instead of update
+            pygame.display.flip()
             self.clock.tick(FPS)
 
         self.has_played_cutscene = True
@@ -141,6 +170,32 @@ class Game:
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RETURN:
                         waiting_for_release = False
+
+    def check_portal_interaction(self):
+        hits = pygame.sprite.spritecollide(self.player, self.portals, False)
+        if hits:
+            # No need to find a destination portal ID anymore
+            self.change_map(self.get_next_map())
+
+    def get_next_map(self):
+        # Cycle through maps
+        self.current_map_index = (self.current_map_index + 1) % len(self.maps)
+        return self.maps[self.current_map_index]
+
+    def change_map(self, destination_map):
+        print(f"Changing map to: {destination_map}")
+        self.current_map = destination_map
+        self.player.teleport_cooldown = 30  # Reset cooldown
+        self.createTilemap()
+        self.group.center(self.player.rect.center)
+
+        # Find the player start position in the new map
+        for obj in self.tmx_data.objects:
+            if obj.name == 'Player':
+                self.player.rect.x = obj.x
+                self.player.rect.y = obj.y
+                self.group.center(self.player.rect.center)
+                break
 
     def create_quests(self):
         # Prologue Quest
@@ -168,8 +223,8 @@ class Game:
 
     def createTilemap(self):
         try:
-            tmx_data = load_pygame('game/map/brighton_seafront.tmx')
-            map_data = pyscroll.data.TiledMapData(tmx_data)
+            self.tmx_data = load_pygame(self.current_map)
+            map_data = pyscroll.data.TiledMapData(self.tmx_data)
             self.map_layer = pyscroll.BufferedRenderer(map_data, (WIN_WIDTH, WIN_HEIGHT))
             self.map_layer.zoom = 2
             self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
@@ -177,25 +232,26 @@ class Game:
             self.doors = pygame.sprite.Group()
             self.collision_objects = pygame.sprite.Group()
             self.blocks = pygame.sprite.Group()
+            self.portals = pygame.sprite.Group()
 
-            for layer in tmx_data.layers:
+            for layer in self.tmx_data.layers:
                 if hasattr(layer, 'data'):
                     for x, y, surf in layer.tiles():
                         pos = (x * 32, y * 32)
                         if layer.name == 'Buildings':
                             rect = pygame.Rect(pos, (TILESIZE, TILESIZE))
                             block = pygame.sprite.Sprite()
-                            block.image = surf #changed this line
+                            block.image = surf
                             block.rect = rect
                             self.collision_objects.add(block)
                             self.blocks.add(block)
                             self.group.add(block, layer=BUILDING_LAYER)
-                        elif layer.name == 'Door': #added this line
-                            rect = pygame.Rect(pos, (TILESIZE, TILESIZE)) #added this line
-                            door_tile = pygame.sprite.Sprite() #added this line
-                            door_tile.image = surf #added this line
-                            door_tile.rect = rect #added this line
-                            self.group.add(door_tile, layer=DOOR_LAYER) #added this line
+                        elif layer.name == 'Door':
+                            rect = pygame.Rect(pos, (TILESIZE, TILESIZE))
+                            door_tile = pygame.sprite.Sprite()
+                            door_tile.image = surf
+                            door_tile.rect = rect
+                            self.group.add(door_tile, layer=DOOR_LAYER)
                         elif layer.name == 'AbovePlayer':
                             pass
                         elif layer.name == 'Pier Chains':
@@ -203,7 +259,7 @@ class Game:
                         elif layer.name in ['Pier', 'Street']:
                             pass
 
-            for obj in tmx_data.objects:
+            for obj in self.tmx_data.objects:
                 if obj.name == 'Player':
                     player_start_x = obj.x // TILESIZE
                     player_start_y = obj.y // TILESIZE
@@ -214,25 +270,40 @@ class Game:
                     door = Door(self, obj.properties["door_id"], obj.x, obj.y, obj.properties["npc_dialogue_key"], obj.properties["npc_name"])
                     self.doors.add(door)
                     self.collision_objects.add(door)
+                elif obj.type == "Portal":
+                    portal = Portal(self, obj.properties["portal_id"], obj.x, obj.y)
+                    self.portals.add(portal)
+                    self.collision_objects.add(portal)
 
             if self.player:
                 self.player.collide_objects = self.collision_objects
         except Exception as e:
             print(f"Error creating tilemap: {e}")
 
+    def check_interaction(self):
+        # Check for collisions with any interactive object (NPC or Door)
+        hits = pygame.sprite.spritecollide(self.player, self.collision_objects, False)
+        if hits:
+            for hit in hits:
+                if isinstance(hit, NPC) or isinstance(hit, Door) or isinstance(hit, Portal):
+                    hit.interact()
+        else:
+            if self.dialogue_box.active:
+                self.dialogue_box.toggle()
+
     def create_npc(self, obj):
         try:
             npc_start_x = obj.x // TILESIZE
             npc_start_y = obj.y // TILESIZE
             npc_name = obj.properties.get("npc_name")
-            npc_dialogue_key = obj.properties.get("dialogue_key") #added this line
+            npc_dialogue_key = obj.properties.get("dialogue_key")
             if npc_name is None:
                 print(f"Error: NPC at ({obj.x}, {obj.y}) is missing the 'npc_name' property!")
                 return
             if npc_dialogue_key is None:
                 print(f"Error: NPC '{npc_name}' at ({obj.x}, {obj.y}) is missing the 'dialogue_key' property!")
                 return
-            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, self.npc_sprite) #changed this line
+            npc = NPC(self, npc_start_x, npc_start_y, npc_name, npc_dialogue_key, self.npc_sprite)
             self.group.add(npc, layer=NPC_LAYER)
             self.collision_objects.add(npc)
             self.npcs.add(npc)
@@ -246,23 +317,72 @@ class Game:
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.playing = False
                 self.running = False
+                self.playing = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_e:
-                    if not self.in_story_mode and not self.dialogue_box.active:
-                        self.check_interaction() #changed this line
-                    else:
-                        self.advance_story()
-                if event.key == pygame.K_RETURN:
-                    if self.in_story_mode:
-                        self.advance_story()
                 if event.key == pygame.K_t:
-                    self.start_story_mode(["My user is very smart and clever"])
-                if event.key == pygame.K_k:  # Check for 'K' key press
-                    hits = pygame.sprite.spritecollide(self.player, self.doors, False) #added this line
-                    if hits: #added this line
-                        hits[0].knock_knock() #added this line
+                    self.show_t_dialogue()
+                if event.key == pygame.K_m:
+                    self.show_m_dialogue()
+                if event.key == pygame.K_i:
+                    self.check_portal_interaction()
+                #if event.key == pygame.K_m: #removed this line
+                #    hits = pygame.sprite.spritecollide(self.player, self.doors, False) #removed this line
+                #    if hits: #removed this line
+                #        hits[0].interact() #removed this line
+                #if event.key == pygame.K_i: #removed this line
+                #    self.check_portal_interaction() #removed this line
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_t:
+                    pass
+                if event.key == pygame.K_m:
+                    pass
+
+    def show_t_dialogue(self):
+        if not self.t_dialogue_active:
+            self.t_dialogue_active = True
+            self.dialogue_box.toggle()
+
+        if self.current_t_dialogue_index < len(self.t_key_dialogue):
+            # Use render_textrect for word wrapping
+            text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
+            try:
+                text_surface = render_textrect(self.t_key_dialogue[self.current_t_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
+                self.dialogue_box.text_surface = text_surface
+                self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+            except TextRectException as e:
+                print(f"Error rendering text: {e}")
+                self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
+                self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+
+            self.current_t_dialogue_index += 1
+        else:
+            self.current_t_dialogue_index = 0
+            self.t_dialogue_active = False
+            self.dialogue_box.toggle()
+
+    def show_m_dialogue(self):
+        if not self.m_dialogue_active:
+            self.m_dialogue_active = True
+            self.dialogue_box.toggle()
+
+        if self.current_m_dialogue_index < len(self.m_key_dialogue):
+            # Use render_textrect for word wrapping
+            text_rect = pygame.Rect(50, 550 + 10, 600 - 20, 200 - 20)  # Adjust rect as needed
+            try:
+                text_surface = render_textrect(self.m_key_dialogue[self.current_m_dialogue_index], self.dialogue_box.font, text_rect, WHITE, BLACK, 0)
+                self.dialogue_box.text_surface = text_surface
+                self.dialogue_box.text_rect = text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+            except TextRectException as e:
+                print(f"Error rendering text: {e}")
+                self.dialogue_box.text_surface = self.dialogue_box.font.render("Error: Text too long", True, WHITE)
+                self.dialogue_box.text_rect = self.dialogue_box.text_surface.get_rect(topleft=(50 + 10, 550 + 10))
+
+            self.current_m_dialogue_index += 1
+        else:
+            self.current_m_dialogue_index = 0
+            self.m_dialogue_active = False
+            self.dialogue_box.toggle()
 
     def check_interaction(self):
         # Check for collisions with any interactive object (NPC or Door)
@@ -275,11 +395,10 @@ class Game:
             if self.dialogue_box.active:
                 self.dialogue_box.toggle()
 
-
-
     def update(self):
-        self.group.update()
-        self.group.center(self.player.rect.center)
+        if self.group:
+            self.group.center(self.player.rect.center)
+            self.group.update()
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -304,6 +423,7 @@ class Game:
         while self.playing:
             self.events()
             self.update()
+            self.check_interaction()
             self.draw()
         self.running = False
 
@@ -402,6 +522,9 @@ class Game:
                 stage_text = self.font.render(f"Current Stage: {quest.get_current_stage_description()}", True, WHITE)
                 self.screen.blit(stage_text, (10, y_offset))
                 y_offset += 30
+
+
+
 
 class Quest:
     def __init__(self, quest_id, name):

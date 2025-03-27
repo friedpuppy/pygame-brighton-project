@@ -14,7 +14,7 @@ class Door(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.knocked = False
-        self.collision_rect = pygame.Rect(self.rect.x - TILESIZE, self.rect.y, TILESIZE * 2, TILESIZE) #added this line
+        self.collision_rect = pygame.Rect(self.rect.x - TILESIZE, self.rect.y, TILESIZE * 2, TILESIZE)
 
     def interact(self):
         if not self.knocked:
@@ -28,11 +28,10 @@ class Door(pygame.sprite.Sprite):
             self.game.npcs.add(npc)
             self.game.group.add(npc, layer=NPC_LAYER)
             self.game.collision_objects.add(npc)
-            npc.walk_out()
             npc.interact()
 
-    def knock_knock(self): #added this line
-        print(f"knock_knock() called for door {self.door_id}") #added this line
+    def knock_knock(self):
+        print(f"knock_knock() called for door {self.door_id}")
 
 class SpeechBubble(pygame.sprite.Sprite):
     def __init__(self, game, text, x, y, duration=120):
@@ -62,17 +61,18 @@ class Spritesheet:
 
     def get_sprite(self, x, y, width, height):
         sprite = pygame.Surface([width, height])
-        sprite.blit(self.sheet, (0, 0), (x, y, width, height))  # cuts out the needed sprite from the spritesheet
-        sprite.set_colorkey(BLACK)  # makes the specified colour transparent
+        sprite.blit(self.sheet, (0, 0), (x, y, width, height))
+        sprite.set_colorkey(BLACK)
         return sprite
 
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.game = game
-        self.groups = self.game.group #changed this line
-        pygame.sprite.Sprite.__init__(self, self.groups)  # Call pygame.sprite.Sprite.__init__()
+        pygame.sprite.Sprite.__init__(self) #changed this line
         self.collide_objects = None
+        self.teleport_cooldown = 0
+        self.update_cooldown = 0
 
         self.x = x * TILESIZE
         self.y = y * TILESIZE
@@ -85,10 +85,10 @@ class Player(pygame.sprite.Sprite):
         self.facing = 'down'
 
         self.image = self.game.character_spritesheet.get_sprite(0, 0, self.width, self.height)
-        self.rect = self.image.get_rect()  # Get the rect from the image
-        self.rect.x = self.x  # Set the x position
-        self.rect.y = self.y  # Set the y position
-        self.game.group.add(self, layer=PLAYER_LAYER) #added this line
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+        self.game.group.add(self, layer=PLAYER_LAYER)
 
     def update(self):
         self.movement()
@@ -99,6 +99,8 @@ class Player(pygame.sprite.Sprite):
         self.collide_blocks('y')
         self.x_change = 0
         self.y_change = 0
+        if self.teleport_cooldown > 0:
+            self.teleport_cooldown -= 1
 
     def movement(self):
         keys = pygame.key.get_pressed()
@@ -117,40 +119,40 @@ class Player(pygame.sprite.Sprite):
         
     def collide_blocks(self, direction):
         if direction == "x":
-            hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
-            if hits: #added this line
+            hits = pygame.sprite.spritecollide(self, self.game.blocks, False) #changed this line
+            if hits:
                 if self.x_change > 0:
                     self.rect.x = hits[0].rect.left - self.rect.width
                 if self.x_change < 0:
                     self.rect.x = hits[0].rect.right
-            hits = pygame.sprite.spritecollide(self, self.collide_objects, False) #added this line
-            if hits: #added this line
-                for hit in hits: #added this line
-                    if isinstance(hit, Door): #added this line
-                        pass #added this line
-                    else: #added this line
-                        if self.x_change > 0: #added this line
-                            self.rect.x = hit.rect.left - self.rect.width #added this line
-                        if self.x_change < 0: #added this line
-                            self.rect.x = hit.rect.right #added this line
+            hits = pygame.sprite.spritecollide(self, self.collide_objects, False)
+            if hits:
+                for hit in hits:
+                    if isinstance(hit, Door):
+                        pass
+                    else:
+                        if self.x_change > 0:
+                            self.rect.x = hit.rect.left - self.rect.width
+                        if self.x_change < 0:
+                            self.rect.x = hit.rect.right
 
         if direction == "y":
-            hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
-            if hits: #added this line
+            hits = pygame.sprite.spritecollide(self, self.game.blocks, False) #changed this line
+            if hits:
                 if self.y_change > 0:
                     self.rect.y = hits[0].rect.top - self.rect.height
                 if self.y_change < 0:
                     self.rect.y = hits[0].rect.bottom
-            hits = pygame.sprite.spritecollide(self, self.collide_objects, False) #added this line
-            if hits: #added this line
-                for hit in hits: #added this line
-                    if isinstance(hit, Door): #added this line
-                        pass #added this line
-                    else: #added this line
-                        if self.y_change > 0: #added this line
-                            self.rect.y = hit.rect.top - self.rect.height #added this line
-                        if self.y_change < 0: #added this line
-                            self.rect.y = hit.rect.bottom #added this line
+            hits = pygame.sprite.spritecollide(self, self.collide_objects, False)
+            if hits:
+                for hit in hits:
+                    if isinstance(hit, Door):
+                        pass
+                    else:
+                        if self.y_change > 0:
+                            self.rect.y = hit.rect.top - self.rect.height
+                        if self.y_change < 0:
+                            self.rect.y = hit.rect.bottom
 
 
     def say(self, text):
@@ -177,7 +179,7 @@ class Button:
         self.rect.x = self.x
         self.rect.y = self.y
 
-        self.text = self.font.render(self.content, True, self.fg)  # 'True' is for antialiasing turned on
+        self.text = self.font.render(self.content, True, self.fg)
         self.text_rect = self.text.get_rect(center=(self.width / 2, self.height / 2))
         self.image.blit(self.text, self.text_rect)
 
@@ -188,18 +190,26 @@ class Button:
             return False
         return False
 
-# class Tile(pygame.sprite.Sprite):
-#     def __init__(self,pos,surf,groups):
-#         super().__init__(groups)
-#         self.image = surf
-#         self.rect = self.image.get_rect(topleft = pos)
+
+class Portal(pygame.sprite.Sprite):
+    def __init__(self, game, portal_id, x, y): #changed this line
+        super().__init__()
+        self.game = game
+        self.portal_id = portal_id
+        self.image = pygame.Surface((TILESIZE, TILESIZE))
+        self.image.fill(PURPLE)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def interact(self):
+        print(f"Player entered portal: {self.portal_id}")
 
 class NPC(pygame.sprite.Sprite):
-    def __init__(self, game, x, y, name, dialogue_key, sprite): #changed this line
-        print(f"NPC __init__ called for: {name}")  # Debugging: Check if NPC is initialized
+    def __init__(self, game, x, y, name, dialogue_key, sprite):
+        print(f"NPC __init__ called for: {name}")
         self.game = game
-        self.groups = self.game.npcs
-        pygame.sprite.Sprite.__init__(self, self.groups)
+        pygame.sprite.Sprite.__init__(self) #changed this line
 
         self.x = x * TILESIZE
         self.y = y * TILESIZE
@@ -207,17 +217,16 @@ class NPC(pygame.sprite.Sprite):
         self.height = TILESIZE
 
         self.name = name
-        self.dialogue_key = dialogue_key #added this line
-        self.dialogue = self.game.dialogues.get(self.dialogue_key) #changed this line
+        self.dialogue_key = dialogue_key
+        self.dialogue = self.game.dialogues.get(self.dialogue_key)
 
-        self.image = sprite #changed this line
+        self.image = sprite
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
-        self.game.group.add(self, layer=NPC_LAYER) #added this line
+        self.game.group.add(self, layer=NPC_LAYER)
 
     def walk_out(self):
-        # Simple walk out animation for now (move to the right by 3 tiles)
         self.rect.x += TILESIZE * 3
 
 
@@ -240,16 +249,17 @@ class NPC(pygame.sprite.Sprite):
                 self.dialogue.reset()
                 if self.dialogue.quest_stage_advance == "talked_to_pierkeeper":
                     if self.game.quest_log["meet_pierkeeper"].current_stage == 100:
-                        self.game.quest_log["repair_pier"].advance_stage()
+                        self.game.quest_log["repair_pier"].advance_stage(10)
                         self.game.dialogues[self.dialogue_key] = self.game.dialogues["pierkeeper_done"]
                     else:
-                        self.game.quest_log["meet_pierkeeper"].complete_stage()
+                        self.game.quest_log["prologue"].complete_stage()
+                        self.game.quest_log["meet_pierkeeper"].advance_stage(10)
                         self.game.dialogues[self.dialogue_key] = self.game.dialogues["pierkeeper"]
                 elif self.dialogue.quest_stage_advance == "talked_to_donor1":
-                    self.game.quest_log["repair_pier"].advance_stage()
+                    self.game.quest_log["repair_pier"].advance_stage(10)
                     self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor1_done"]
                 elif self.dialogue.quest_stage_advance == "talked_to_donor2":
-                    self.game.quest_log["repair_pier"].advance_stage()
+                    self.game.quest_log["repair_pier"].advance_stage(10)
                     self.game.dialogues[self.dialogue_key] = self.game.dialogues["donor2_done"]
                 elif self.dialogue.quest_stage_advance == "talked_to_donor3":
                     self.game.quest_log["repair_pier"].complete_stage()
