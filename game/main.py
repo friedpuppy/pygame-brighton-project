@@ -6,7 +6,7 @@ import sys
 from pytmx.util_pygame import load_pygame
 import pyscroll
 import pyscroll.data
-import random
+
 
 class Game:
     def __init__(self):
