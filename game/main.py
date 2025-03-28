@@ -28,6 +28,8 @@ class Game:
         self.current_map = self.maps[self.current_map_index]
         self.group = None
 
+        
+
         # Dialogue for the "T" key
         self.t_key_dialogue = ["Hello. Oh my goodness what has happened",
                                 "Oh you said the pier has collapsed?",
@@ -557,9 +559,6 @@ class Game:
                 stage_text = self.font.render(f"Current Stage: {quest.get_current_stage_description()}", True, WHITE)
                 self.screen.blit(stage_text, (10, y_offset))
                 y_offset += 30
-
-
-
 
 class Quest:
     def __init__(self, quest_id, name):

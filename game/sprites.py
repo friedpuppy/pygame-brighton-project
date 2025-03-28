@@ -34,6 +34,13 @@ class Door(pygame.sprite.Sprite):
         print(f"knock_knock() called for door {self.door_id}")
 
 
+class TransitionSprite(pygame.sprite.Sprite):
+    def __init__(self,pos, size, target, groups):
+        surf = pygame.Surface(size)
+        super().__init__(pos, surf, groups)
+        self.target = target
+
+
 class SpeechBubble(pygame.sprite.Sprite):
     def __init__(self, game, text, x, y, duration=120):
         super().__init__()
