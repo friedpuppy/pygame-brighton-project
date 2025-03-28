@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="20" nextobjectid="35">
- <tileset firstgid="1" source="C:/Users/callum/tiledmaps/Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
- <tileset firstgid="1289" source="C:/Users/callum/tiledmaps/colonial.tsx"/>
- <tileset firstgid="2313" source="C:/Users/callum/tiledmaps/mayor.tsx"/>
- <tileset firstgid="2314" source="C:/Users/callum/tiledmaps/Generated Image March 27, 2025 - 3_40PM.tsx"/>
- <tileset firstgid="2315" source="C:/Users/callum/tiledmaps/Gdenerated Image March 27, 2025 - 3_40PM.tsx"/>
- <tileset firstgid="2316" source="C:/Users/callum/tiledmaps/Generated Image March 27, 2025 - 3_40PM.tsx"/>
- <tileset firstgid="2317" source="C:/Users/callum/tiledmaps/Generated Image March 27, 2025 - 3_40PM.tsx"/>
+ <tileset firstgid="1" source="Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
+ <tileset firstgid="1289" source="colonial.tsx"/>
+ <tileset firstgid="2313" source="mayor.tsx"/>
+ <tileset firstgid="2314" source="Generated Image March 27, 2025 - 3_40PM.tsx"/>
+ <tileset firstgid="2315" source="Gdenerated Image March 27, 2025 - 3_40PM.tsx"/>
  <layer id="1" name="Street" width="30" height="30">
   <data encoding="csv">
 408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,408,
