@@ -82,10 +82,15 @@ class Player(pygame.sprite.Sprite):
         self.teleport_cooldown = 0
         self.update_cooldown = 0
 
+        # self.x = x * TILESIZE
+        # self.y = y * TILESIZE
+        # self.width = TILESIZE
+        # self.height = TILESIZE
+
         self.x = x * TILESIZE
         self.y = y * TILESIZE
-        self.width = TILESIZE
-        self.height = TILESIZE
+        self.width = 62
+        self.height = 100
 
         self.x_change = 0
         self.y_change = 0

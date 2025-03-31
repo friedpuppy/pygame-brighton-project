@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="30" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="20" nextobjectid="35">
- <editorsettings>
-  <export target="D:/Documents/python/brighton/test-python/game/map/mayor_brighton_seafront.tmx" format="tmx"/>
- </editorsettings>
  <tileset firstgid="1" source="Slates v.2 [32x32px orthogonal tileset by Ivan Voirol].tsx"/>
  <tileset firstgid="1289" source="colonial.tsx"/>
  <tileset firstgid="2313" source="mayor.tsx"/>

@@ -49,7 +49,8 @@ class Game:
         self.current_m_dialogue_index = 0
         self.m_dialogue_active = False
         
-        self.character_spritesheet = Spritesheet('game/img/character.png')
+        #self.character_spritesheet = Spritesheet('game/img/character.png')
+        self.character_spritesheet = Spritesheet('game/img/player.png')
         self.terrain_spritesheet = Spritesheet('game/img/terrain.png')
         self.enemy_spritesheet = Spritesheet('game/img/enemy.png')
         self.npc_sprite = self.enemy_spritesheet.get_sprite(3, 2, TILESIZE, TILESIZE)
